@@ -25,6 +25,7 @@ export const STOCKPILE_CATEGORIES = [
   { value: "energy", label: "Energy", color: "bg-amber-100 text-amber-700", icon: "⚡" },
   { value: "cash", label: "Cash", color: "bg-emerald-100 text-emerald-700", icon: "💷" },
   { value: "gold", label: "Gold", color: "bg-yellow-100 text-yellow-700", icon: "🪙" },
+  { value: "savings", label: "Savings", color: "bg-violet-100 text-violet-700", icon: "🏦" },
   { value: "medicine", label: "Medicine", color: "bg-red-100 text-red-700", icon: "💊" },
 ] as const;
 
@@ -34,6 +35,7 @@ export const STOCKPILE_UNITS: Record<string, string[]> = {
   energy: ["liters", "units", "kg", "bottles", "cans"],
   cash: ["£"],
   gold: ["1/4 oz coins"],
+  savings: ["£"],
   medicine: ["tablets", "packets", "bottles", "boxes", "units", "days"],
 };
 
@@ -45,6 +47,12 @@ export function getStockpileCategoryColor(category: string): string {
 export function getStockpileCategoryLabel(category: string): string {
   const found = STOCKPILE_CATEGORIES.find((c) => c.value === category);
   return found?.label ?? category;
+}
+
+export const STOCKPILE_CATEGORY_VALUES = ["food", "water", "energy", "cash", "gold", "savings", "medicine"] as const;
+
+export function isStockpileCategory(category: string): boolean {
+  return (STOCKPILE_CATEGORY_VALUES as readonly string[]).includes(category);
 }
 
 export const COMMON_UNITS = [

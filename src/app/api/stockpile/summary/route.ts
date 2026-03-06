@@ -37,6 +37,11 @@ export async function GET() {
       .filter((i) => i.category === "gold")
       .reduce((sum, i) => sum + i.quantity * 0.25, 0);
 
+    // Savings: sum value_amount
+    const savingsTotal = items
+      .filter((i) => i.category === "savings")
+      .reduce((sum, i) => sum + (i.valueAmount ?? 0), 0);
+
     // Energy: count items
     const energyItems = items.filter((i) => i.category === "energy").length;
 
@@ -48,6 +53,7 @@ export async function GET() {
       waterDays,
       cashTotal,
       goldOz,
+      savingsTotal,
       energyItems,
       medicineItems,
       totalItems: items.length,

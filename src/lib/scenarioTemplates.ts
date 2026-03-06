@@ -25,7 +25,7 @@ export const SCENARIO_TEMPLATES: ScenarioTemplate[] = [
       { description: "Flashlights with batteries", itemType: "supply", supplyCategory: "tools", requiredQuantity: 2, requiredUnit: "units", sortOrder: 2 },
       { description: "Portable phone charger / power bank", itemType: "supply", supplyCategory: "communication", requiredQuantity: 1, requiredUnit: "units", sortOrder: 3 },
       { description: "Battery-powered or hand-crank radio", itemType: "supply", supplyCategory: "communication", requiredQuantity: 1, requiredUnit: "units", sortOrder: 4 },
-      { description: "Cash in small denominations", itemType: "supply", supplyCategory: "financial", requiredQuantity: 100, requiredUnit: "GBP", sortOrder: 5 },
+      { description: "Cash in small denominations", itemType: "supply", supplyCategory: "cash", requiredQuantity: 100, requiredUnit: "£", sortOrder: 5 },
       { description: "Candles and matches/lighter", itemType: "supply", supplyCategory: "tools", requiredQuantity: 1, requiredUnit: "boxes", sortOrder: 6 },
       { description: "First aid kit", itemType: "supply", supplyCategory: "first_aid", requiredQuantity: 1, requiredUnit: "units", sortOrder: 7 },
       { description: "Essential medications for 7 days", itemType: "supply", supplyCategory: "medicine", requiredQuantity: 7, requiredUnit: "days", sortOrder: 8 },
@@ -59,7 +59,7 @@ export const SCENARIO_TEMPLATES: ScenarioTemplate[] = [
     checklistItems: [
       { description: "Go-bag packed and accessible for each family member", itemType: "supply", supplyCategory: "other", requiredQuantity: 2, requiredUnit: "bags", sortOrder: 0 },
       { description: "Copies of important documents in waterproof bag", itemType: "supply", supplyCategory: "documents", requiredQuantity: 1, requiredUnit: "packets", sortOrder: 1 },
-      { description: "Cash and bank cards", itemType: "supply", supplyCategory: "financial", requiredQuantity: 200, requiredUnit: "GBP", sortOrder: 2 },
+      { description: "Cash and bank cards", itemType: "supply", supplyCategory: "cash", requiredQuantity: 200, requiredUnit: "£", sortOrder: 2 },
       { description: "Change of clothes for each family member", itemType: "supply", supplyCategory: "clothing", requiredQuantity: 2, requiredUnit: "sets", sortOrder: 3 },
       { description: "Bottled water for 3 days", itemType: "supply", supplyCategory: "water", requiredQuantity: 6, requiredUnit: "liters", sortOrder: 4 },
       { description: "Non-perishable snacks", itemType: "supply", supplyCategory: "food", requiredQuantity: 6, requiredUnit: "packets", sortOrder: 5 },
@@ -76,7 +76,7 @@ export const SCENARIO_TEMPLATES: ScenarioTemplate[] = [
     description: "Survive 3 months of reduced or no income",
     category: "financial",
     checklistItems: [
-      { description: "Emergency fund covering 3 months of essential expenses", itemType: "supply", supplyCategory: "financial", requiredQuantity: 1, requiredUnit: "units", sortOrder: 0 },
+      { description: "Emergency fund covering 3 months of essential expenses", itemType: "supply", supplyCategory: "savings", requiredQuantity: 5000, requiredUnit: "£", sortOrder: 0 },
       { description: "List all essential monthly bills and amounts", itemType: "document", sortOrder: 1 },
       { description: "Review and document all insurance policies", itemType: "document", sortOrder: 2 },
       { description: "Know how to access pension/savings accounts", itemType: "skill", sortOrder: 3 },

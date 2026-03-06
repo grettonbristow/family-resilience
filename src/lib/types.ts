@@ -64,6 +64,7 @@ export type StockpileSummary = {
   waterDays: number;
   cashTotal: number;
   goldOz: number;
+  savingsTotal: number;
   energyItems: number;
   medicineItems: number;
   totalItems: number;

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ReadinessRing from "@/components/ReadinessRing";
+import { isStockpileCategory } from "@/lib/constants";
 import type { ChecklistItem } from "@/lib/types";
 
 type ScenarioDetail = {
@@ -75,20 +76,46 @@ export default function ScenarioDetailPage() {
   const addToInventory = async (item: ChecklistItem) => {
     setAddingItemId(item.id);
     try {
-      const res = await fetch("/api/supplies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: item.description,
-          category: item.supplyCategory || "other",
-          quantity: item.requiredQuantity || 1,
-          unit: item.requiredUnit || "units",
-          minimumQuantity: 0,
-          expiryDate: null,
-          location: null,
-          notes: null,
-        }),
-      });
+      const cat = item.supplyCategory || "other";
+      const isStockpile = isStockpileCategory(cat);
+
+      let res: Response;
+      if (isStockpile) {
+        // Route to stockpile for food, water, cash, gold, savings, energy, medicine
+        const isMonetary = cat === "cash" || cat === "gold" || cat === "savings";
+        res = await fetch("/api/stockpile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: item.description,
+            category: cat,
+            quantity: isMonetary ? 1 : (item.requiredQuantity || 1),
+            unit: item.requiredUnit || "units",
+            valueAmount: isMonetary ? (item.requiredQuantity || 0) : null,
+            caloriesTotal: null,
+            daysSupply: null,
+            expiryDate: null,
+            location: null,
+            notes: null,
+          }),
+        });
+      } else {
+        // Route to inventory for non-stockpile categories
+        res = await fetch("/api/supplies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: item.description,
+            category: cat,
+            quantity: item.requiredQuantity || 1,
+            unit: item.requiredUnit || "units",
+            minimumQuantity: 0,
+            expiryDate: null,
+            location: null,
+            notes: null,
+          }),
+        });
+      }
       if (!res.ok) throw new Error("Failed to add");
       setAddedItemId(item.id);
       refreshScenario();
@@ -255,6 +282,8 @@ export default function ScenarioDetailPage() {
                                     ? "Adding..."
                                     : addedItemId === item.id
                                     ? "Added!"
+                                    : isStockpileCategory(item.supplyCategory || "")
+                                    ? "+ Add to Stockpile"
                                     : "+ Add to Inventory"}
                                 </button>
                               )}

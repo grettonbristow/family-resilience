@@ -105,6 +105,13 @@ export default function StockpileItemDetailPage() {
           </div>
         )}
 
+        {item.category === "savings" && item.valueAmount != null && (
+          <div className="flex justify-between">
+            <span className="text-sm text-gray-500">Amount</span>
+            <span className="text-sm font-semibold text-gray-900">{"\u00A3"}{item.valueAmount.toFixed(2)}</span>
+          </div>
+        )}
+
         {item.category === "gold" && (
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Total oz</span>

@@ -97,6 +97,10 @@ function StockpileContent() {
             <p className="text-[10px] font-semibold uppercase opacity-70">Gold</p>
             <p className="text-lg font-bold">{summary.goldOz > 0 ? `${summary.goldOz}oz` : "—"}</p>
           </div>
+          <div className="rounded-xl border p-2.5 text-violet-600 bg-violet-50 border-violet-200">
+            <p className="text-[10px] font-semibold uppercase opacity-70">Savings</p>
+            <p className="text-lg font-bold">{"\u00A3"}{Math.round(summary.savingsTotal ?? 0)}</p>
+          </div>
           <div className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200">
             <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>
             <p className="text-lg font-bold">{summary.energyItems}</p>
@@ -189,7 +193,7 @@ function StockpileContent() {
                         {item.quantity * 0.25} oz
                       </span>
                     )}
-                    {(item.category === "cash" || item.category === "gold") && item.valueAmount != null && (
+                    {(item.category === "cash" || item.category === "gold" || item.category === "savings") && item.valueAmount != null && (
                       <span className="text-xs text-gray-400">
                         {"\u00A3"}{item.category === "gold" ? (item.valueAmount * item.quantity).toFixed(0) : item.valueAmount.toFixed(0)}
                       </span>

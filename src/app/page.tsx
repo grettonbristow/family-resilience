@@ -29,7 +29,7 @@ export default function DashboardPage() {
             lowStockItems: [],
             scenarioSummaries: [],
             totalSupplies: 0,
-            stockpileSummary: { foodDays: 0, waterDays: 0, cashTotal: 0, goldOz: 0, energyItems: 0, medicineItems: 0, totalItems: 0 },
+            stockpileSummary: { foodDays: 0, waterDays: 0, cashTotal: 0, goldOz: 0, savingsTotal: 0, energyItems: 0, medicineItems: 0, totalItems: 0 },
           });
         }
       })
@@ -40,7 +40,7 @@ export default function DashboardPage() {
           lowStockItems: [],
           scenarioSummaries: [],
           totalSupplies: 0,
-          stockpileSummary: { foodDays: 0, waterDays: 0, cashTotal: 0, goldOz: 0, energyItems: 0, medicineItems: 0, totalItems: 0 },
+          stockpileSummary: { foodDays: 0, waterDays: 0, cashTotal: 0, goldOz: 0, savingsTotal: 0, energyItems: 0, medicineItems: 0, totalItems: 0 },
         });
       })
       .finally(() => setLoading(false));
@@ -100,6 +100,10 @@ export default function DashboardPage() {
             <Link href="/stockpile?filter=gold" className="rounded-xl border p-2.5 text-yellow-700 bg-yellow-50 border-yellow-200 active:scale-[0.98] transition-transform">
               <p className="text-[10px] font-semibold uppercase opacity-70">Gold</p>
               <p className="text-lg font-bold">{data.stockpileSummary.goldOz > 0 ? `${data.stockpileSummary.goldOz}oz` : "—"}</p>
+            </Link>
+            <Link href="/stockpile?filter=savings" className="rounded-xl border p-2.5 text-violet-600 bg-violet-50 border-violet-200 active:scale-[0.98] transition-transform">
+              <p className="text-[10px] font-semibold uppercase opacity-70">Savings</p>
+              <p className="text-lg font-bold">{"\u00A3"}{Math.round(data.stockpileSummary.savingsTotal)}</p>
             </Link>
             <Link href="/stockpile?filter=energy" className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200 active:scale-[0.98] transition-transform">
               <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>

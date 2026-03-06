@@ -100,6 +100,10 @@ export async function GET() {
       .filter((i) => i.category === "gold")
       .reduce((sum, i) => sum + i.quantity * 0.25, 0);
 
+    const savingsTotal = stockpile
+      .filter((i) => i.category === "savings")
+      .reduce((sum, i) => sum + (i.valueAmount ?? 0), 0);
+
     const energyItems = stockpile.filter((i) => i.category === "energy").length;
     const medicineItems = stockpile.filter((i) => i.category === "medicine").length;
 
@@ -114,6 +118,7 @@ export async function GET() {
         waterDays,
         cashTotal,
         goldOz,
+        savingsTotal,
         energyItems,
         medicineItems,
         totalItems: stockpile.length,

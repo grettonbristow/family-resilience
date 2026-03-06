@@ -62,7 +62,7 @@ export default function EditStockpileItemPage() {
           quantity,
           unit,
           caloriesTotal: category === "food" && caloriesTotal !== "" ? caloriesTotal : null,
-          valueAmount: (category === "cash" || category === "gold") && valueAmount !== "" ? valueAmount : null,
+          valueAmount: (category === "cash" || category === "gold" || category === "savings") && valueAmount !== "" ? valueAmount : null,
           daysSupply: (category === "energy" || category === "medicine") && daysSupply !== "" ? daysSupply : null,
           expiryDate: expiryDate || null,
           location: location.trim() || null,
@@ -215,6 +215,22 @@ export default function EditStockpileItemPage() {
               value={valueAmount}
               onChange={(e) => setValueAmount(e.target.value ? parseFloat(e.target.value) : "")}
               placeholder="Value per coin in pounds"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
+            />
+          </div>
+        )}
+
+        {category === "savings" && (
+          <div>
+            <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1.5">Amount ({"\u00A3"})</label>
+            <input
+              id="value"
+              type="number"
+              min={0}
+              step="0.01"
+              value={valueAmount}
+              onChange={(e) => setValueAmount(e.target.value ? parseFloat(e.target.value) : "")}
+              placeholder="Total savings amount in pounds"
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
             />
           </div>
