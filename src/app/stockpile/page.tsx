@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { STOCKPILE_CATEGORIES } from "@/lib/constants";
@@ -8,6 +8,18 @@ import ExpiryBadge from "@/components/ExpiryBadge";
 import type { StockpileItem, StockpileSummary } from "@/lib/types";
 
 export default function StockpilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <StockpileContent />
+    </Suspense>
+  );
+}
+
+function StockpileContent() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState<StockpileItem[]>([]);
   const [summary, setSummary] = useState<StockpileSummary | null>(null);
