@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-const GENERATE_PROMPT = `Respond with ONLY a JSON object (no markdown, no code fences) with these fields:
+const GENERATE_PROMPT = `Respond with ONLY a JSON object (no markdown, no code fences, no explanation) with these fields:
 - "name": scenario name
 - "description": 1-2 sentence description of the scenario
 - "category": one of "power", "weather", "supply_disruption", "medical", "financial", "evacuation", "general"
 - "checklistItems": array of objects, each with:
   - "description": what is needed (be specific with quantities where relevant)
   - "itemType": one of "supply", "action", "document", "skill"
-  - "supplyCategory": (only if itemType is "supply") one of "food", "water", "medicine", "first_aid", "tools", "fuel", "documents", "communication", "financial", "hygiene", "clothing", "other"
+  - "supplyCategory": (only if itemType is "supply") one of "food", "water", "medicine", "cash", "savings", "gold", "energy", "first_aid", "tools", "fuel", "documents", "communication", "hygiene", "clothing", "other"
   - "requiredQuantity": (only if itemType is "supply") number needed
-  - "requiredUnit": (only if itemType is "supply") the unit (e.g. "gallons", "units", "days", "cans")
+  - "requiredUnit": (only if itemType is "supply") the unit (e.g. "liters", "kg", "units", "days", "£")
   - "sortOrder": number for ordering (0 = most important)
 
+For financial items: use "cash" for physical cash (unit "£"), "savings" for emergency funds/savings (unit "£"), "gold" for precious metals.
 Scale quantities for the given household size. Include a mix of supply, action, document, and skill items. Be practical and specific to UK households where relevant.`;
 
 export async function POST(request: Request) {
@@ -49,16 +50,46 @@ export async function POST(request: Request) {
     }
 
     let jsonText = textContent.text.trim();
+
+    // Strip markdown code fences if present
     const fenceMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (fenceMatch) {
       jsonText = fenceMatch[1].trim();
     }
 
+    // Try to extract JSON object if there's surrounding text
+    if (!jsonText.startsWith("{")) {
+      const jsonStart = jsonText.indexOf("{");
+      if (jsonStart !== -1) {
+        jsonText = jsonText.substring(jsonStart);
+      }
+    }
+    if (!jsonText.endsWith("}")) {
+      const jsonEnd = jsonText.lastIndexOf("}");
+      if (jsonEnd !== -1) {
+        jsonText = jsonText.substring(0, jsonEnd + 1);
+      }
+    }
+
     try {
       const result = JSON.parse(jsonText);
+
+      // Validate basic structure
+      if (!result.name || !Array.isArray(result.checklistItems)) {
+        return NextResponse.json({ error: "AI returned invalid scenario structure" }, { status: 500 });
+      }
+
+      // Normalize any old "financial" supplyCategory to "cash"
+      for (const item of result.checklistItems) {
+        if (item.supplyCategory === "financial") {
+          item.supplyCategory = "cash";
+        }
+      }
+
       return NextResponse.json(result);
     } catch {
-      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
+      console.error("Failed to parse AI JSON:", jsonText.substring(0, 200));
+      return NextResponse.json({ error: "Failed to parse AI response. Please try again." }, { status: 500 });
     }
   } catch (error) {
     console.error("Scenario generation failed:", error);

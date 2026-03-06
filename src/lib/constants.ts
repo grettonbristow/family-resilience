@@ -19,14 +19,20 @@ export const SCENARIO_CATEGORIES = [
   { value: "general", label: "General", icon: "shield" },
 ] as const;
 
+// Main stockpile categories (money is a parent for cash/gold/savings)
 export const STOCKPILE_CATEGORIES = [
-  { value: "food", label: "Food", color: "bg-orange-100 text-orange-700", icon: "🍚" },
-  { value: "water", label: "Water", color: "bg-blue-100 text-blue-700", icon: "💧" },
-  { value: "energy", label: "Energy", color: "bg-amber-100 text-amber-700", icon: "⚡" },
-  { value: "cash", label: "Cash", color: "bg-emerald-100 text-emerald-700", icon: "💷" },
-  { value: "gold", label: "Gold", color: "bg-yellow-100 text-yellow-700", icon: "🪙" },
-  { value: "savings", label: "Savings", color: "bg-violet-100 text-violet-700", icon: "🏦" },
-  { value: "medicine", label: "Medicine", color: "bg-red-100 text-red-700", icon: "💊" },
+  { value: "food", label: "Food", color: "bg-orange-100 text-orange-700" },
+  { value: "water", label: "Water", color: "bg-blue-100 text-blue-700" },
+  { value: "money", label: "Money", color: "bg-emerald-100 text-emerald-700" },
+  { value: "energy", label: "Energy", color: "bg-amber-100 text-amber-700" },
+  { value: "medicine", label: "Medicine", color: "bg-red-100 text-red-700" },
+] as const;
+
+// Money sub-types (stored as category in DB)
+export const MONEY_SUBTYPES = [
+  { value: "cash", label: "Cash", color: "bg-emerald-100 text-emerald-700" },
+  { value: "gold", label: "Gold", color: "bg-yellow-100 text-yellow-700" },
+  { value: "savings", label: "Savings", color: "bg-violet-100 text-violet-700" },
 ] as const;
 
 export const STOCKPILE_UNITS: Record<string, string[]> = {
@@ -39,16 +45,29 @@ export const STOCKPILE_UNITS: Record<string, string[]> = {
   medicine: ["tablets", "packets", "bottles", "boxes", "units", "days"],
 };
 
+export function isMoneyCategory(category: string): boolean {
+  return category === "cash" || category === "gold" || category === "savings";
+}
+
 export function getStockpileCategoryColor(category: string): string {
+  if (isMoneyCategory(category)) {
+    const found = MONEY_SUBTYPES.find((c) => c.value === category);
+    return found?.color ?? "bg-emerald-100 text-emerald-700";
+  }
   const found = STOCKPILE_CATEGORIES.find((c) => c.value === category);
   return found?.color ?? "bg-slate-100 text-slate-700";
 }
 
 export function getStockpileCategoryLabel(category: string): string {
+  if (isMoneyCategory(category)) {
+    const found = MONEY_SUBTYPES.find((c) => c.value === category);
+    return found?.label ?? category;
+  }
   const found = STOCKPILE_CATEGORIES.find((c) => c.value === category);
   return found?.label ?? category;
 }
 
+// All DB-level stockpile category values (including money sub-types)
 export const STOCKPILE_CATEGORY_VALUES = ["food", "water", "energy", "cash", "gold", "savings", "medicine"] as const;
 
 export function isStockpileCategory(category: string): boolean {

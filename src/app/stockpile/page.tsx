@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { STOCKPILE_CATEGORIES } from "@/lib/constants";
+import { STOCKPILE_CATEGORIES, MONEY_SUBTYPES, isMoneyCategory } from "@/lib/constants";
 import ExpiryBadge from "@/components/ExpiryBadge";
 import type { StockpileItem, StockpileSummary } from "@/lib/types";
 
@@ -25,7 +25,11 @@ function StockpileContent() {
   const [summary, setSummary] = useState<StockpileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string | null>(searchParams.get("filter"));
+  const initialFilter = searchParams.get("filter");
+  // Map old direct filters (cash/gold/savings) to money
+  const [filter, setFilter] = useState<string | null>(
+    initialFilter && isMoneyCategory(initialFilter) ? "money" : initialFilter
+  );
 
   useEffect(() => {
     Promise.all([
@@ -49,7 +53,11 @@ function StockpileContent() {
   }
 
   const filtered = items.filter((item) => {
-    if (filter && item.category !== filter) return false;
+    if (filter === "money") {
+      if (!isMoneyCategory(item.category)) return false;
+    } else if (filter && item.category !== filter) {
+      return false;
+    }
     if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -60,11 +68,10 @@ function StockpileContent() {
     return "text-green-600 bg-green-50 border-green-200";
   };
 
-  const getDurationBarColor = (days: number) => {
-    if (days < 7) return "bg-red-500";
-    if (days < 30) return "bg-amber-500";
-    return "bg-green-500";
-  };
+  // Total money value for the combined card
+  const totalMoney = summary
+    ? (summary.cashTotal ?? 0) + (summary.savingsTotal ?? 0) + (summary.goldOz ?? 0) * 0 // gold shown separately as oz
+    : 0;
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
@@ -80,34 +87,44 @@ function StockpileContent() {
 
       {/* Duration summary cards */}
       {summary && (
-        <div className="grid grid-cols-3 gap-2 mb-5">
-          <div className={`rounded-xl border p-2.5 ${getDurationColor(summary.foodDays)}`}>
-            <p className="text-[10px] font-semibold uppercase opacity-70">Food</p>
-            <p className="text-lg font-bold">{summary.foodDays > 0 ? `${summary.foodDays}d` : "—"}</p>
+        <div className="space-y-2 mb-5">
+          <div className="grid grid-cols-2 gap-2">
+            <div className={`rounded-xl border p-2.5 ${getDurationColor(summary.foodDays)}`}>
+              <p className="text-[10px] font-semibold uppercase opacity-70">Food</p>
+              <p className="text-lg font-bold">{summary.foodDays > 0 ? `${summary.foodDays}d` : "—"}</p>
+            </div>
+            <div className={`rounded-xl border p-2.5 ${getDurationColor(summary.waterDays)}`}>
+              <p className="text-[10px] font-semibold uppercase opacity-70">Water</p>
+              <p className="text-lg font-bold">{summary.waterDays > 0 ? `${summary.waterDays}d` : "—"}</p>
+            </div>
           </div>
-          <div className={`rounded-xl border p-2.5 ${getDurationColor(summary.waterDays)}`}>
-            <p className="text-[10px] font-semibold uppercase opacity-70">Water</p>
-            <p className="text-lg font-bold">{summary.waterDays > 0 ? `${summary.waterDays}d` : "—"}</p>
+          {/* Money card with breakdown */}
+          <div className="rounded-xl border p-3 bg-emerald-50 border-emerald-200">
+            <p className="text-[10px] font-semibold uppercase text-emerald-600 opacity-70 mb-1.5">Money</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <p className="text-[10px] text-emerald-500 uppercase">Cash</p>
+                <p className="text-base font-bold text-emerald-700">{"\u00A3"}{Math.round(summary.cashTotal)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-yellow-600 uppercase">Gold</p>
+                <p className="text-base font-bold text-yellow-700">{summary.goldOz > 0 ? `${summary.goldOz}oz` : "—"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-violet-500 uppercase">Savings</p>
+                <p className="text-base font-bold text-violet-700">{"\u00A3"}{Math.round(summary.savingsTotal ?? 0)}</p>
+              </div>
+            </div>
           </div>
-          <div className="rounded-xl border p-2.5 text-emerald-600 bg-emerald-50 border-emerald-200">
-            <p className="text-[10px] font-semibold uppercase opacity-70">Cash</p>
-            <p className="text-lg font-bold">{"\u00A3"}{Math.round(summary.cashTotal)}</p>
-          </div>
-          <div className="rounded-xl border p-2.5 text-yellow-700 bg-yellow-50 border-yellow-200">
-            <p className="text-[10px] font-semibold uppercase opacity-70">Gold</p>
-            <p className="text-lg font-bold">{summary.goldOz > 0 ? `${summary.goldOz}oz` : "—"}</p>
-          </div>
-          <div className="rounded-xl border p-2.5 text-violet-600 bg-violet-50 border-violet-200">
-            <p className="text-[10px] font-semibold uppercase opacity-70">Savings</p>
-            <p className="text-lg font-bold">{"\u00A3"}{Math.round(summary.savingsTotal ?? 0)}</p>
-          </div>
-          <div className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200">
-            <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>
-            <p className="text-lg font-bold">{summary.energyItems}</p>
-          </div>
-          <div className="rounded-xl border p-2.5 text-red-600 bg-red-50 border-red-200">
-            <p className="text-[10px] font-semibold uppercase opacity-70">Medicine</p>
-            <p className="text-lg font-bold">{summary.medicineItems}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200">
+              <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>
+              <p className="text-lg font-bold">{summary.energyItems}</p>
+            </div>
+            <div className="rounded-xl border p-2.5 text-red-600 bg-red-50 border-red-200">
+              <p className="text-[10px] font-semibold uppercase opacity-70">Medicine</p>
+              <p className="text-lg font-bold">{summary.medicineItems}</p>
+            </div>
           </div>
         </div>
       )}
@@ -167,7 +184,12 @@ function StockpileContent() {
       ) : (
         <div className="space-y-2">
           {filtered.map((item) => {
-            const catInfo = STOCKPILE_CATEGORIES.find((c) => c.value === item.category);
+            const isMoney = isMoneyCategory(item.category);
+            const subType = isMoney ? MONEY_SUBTYPES.find((s) => s.value === item.category) : null;
+            const mainCat = isMoney
+              ? STOCKPILE_CATEGORIES.find((c) => c.value === "money")
+              : STOCKPILE_CATEGORIES.find((c) => c.value === item.category);
+
             return (
               <Link
                 key={item.id}
@@ -177,8 +199,8 @@ function StockpileContent() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${catInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
-                      {catInfo?.label ?? item.category}
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${mainCat?.color ?? "bg-gray-100 text-gray-600"}`}>
+                      {subType ? subType.label : (mainCat?.label ?? item.category)}
                     </span>
                     <span className="text-xs text-gray-500">
                       {item.quantity} {item.unit}
@@ -193,7 +215,7 @@ function StockpileContent() {
                         {item.quantity * 0.25} oz
                       </span>
                     )}
-                    {(item.category === "cash" || item.category === "gold" || item.category === "savings") && item.valueAmount != null && (
+                    {isMoney && item.valueAmount != null && (
                       <span className="text-xs text-gray-400">
                         {"\u00A3"}{item.category === "gold" ? (item.valueAmount * item.quantity).toFixed(0) : item.valueAmount.toFixed(0)}
                       </span>

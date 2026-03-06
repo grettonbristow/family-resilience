@@ -76,43 +76,52 @@ export default function DashboardPage() {
       {data.stockpileSummary && (
         <div className="mb-5">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Preparedness</h2>
-          <div className="grid grid-cols-3 gap-2">
-            <Link href="/stockpile?filter=food" className={`rounded-xl border p-2.5 active:scale-[0.98] transition-transform ${
-              data.stockpileSummary.foodDays < 7 ? "text-red-600 bg-red-50 border-red-200" :
-              data.stockpileSummary.foodDays < 30 ? "text-amber-600 bg-amber-50 border-amber-200" :
-              "text-green-600 bg-green-50 border-green-200"
-            }`}>
-              <p className="text-[10px] font-semibold uppercase opacity-70">Food</p>
-              <p className="text-lg font-bold">{data.stockpileSummary.foodDays > 0 ? `${data.stockpileSummary.foodDays}d` : "—"}</p>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/stockpile?filter=food" className={`rounded-xl border p-2.5 active:scale-[0.98] transition-transform ${
+                data.stockpileSummary.foodDays < 7 ? "text-red-600 bg-red-50 border-red-200" :
+                data.stockpileSummary.foodDays < 30 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                "text-green-600 bg-green-50 border-green-200"
+              }`}>
+                <p className="text-[10px] font-semibold uppercase opacity-70">Food</p>
+                <p className="text-lg font-bold">{data.stockpileSummary.foodDays > 0 ? `${data.stockpileSummary.foodDays}d` : "—"}</p>
+              </Link>
+              <Link href="/stockpile?filter=water" className={`rounded-xl border p-2.5 active:scale-[0.98] transition-transform ${
+                data.stockpileSummary.waterDays < 7 ? "text-red-600 bg-red-50 border-red-200" :
+                data.stockpileSummary.waterDays < 30 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                "text-green-600 bg-green-50 border-green-200"
+              }`}>
+                <p className="text-[10px] font-semibold uppercase opacity-70">Water</p>
+                <p className="text-lg font-bold">{data.stockpileSummary.waterDays > 0 ? `${data.stockpileSummary.waterDays}d` : "—"}</p>
+              </Link>
+            </div>
+            <Link href="/stockpile?filter=money" className="block rounded-xl border p-3 bg-emerald-50 border-emerald-200 active:scale-[0.99] transition-transform">
+              <p className="text-[10px] font-semibold uppercase text-emerald-600 opacity-70 mb-1.5">Money</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <p className="text-[10px] text-emerald-500 uppercase">Cash</p>
+                  <p className="text-base font-bold text-emerald-700">{"\u00A3"}{Math.round(data.stockpileSummary.cashTotal)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-yellow-600 uppercase">Gold</p>
+                  <p className="text-base font-bold text-yellow-700">{data.stockpileSummary.goldOz > 0 ? `${data.stockpileSummary.goldOz}oz` : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-violet-500 uppercase">Savings</p>
+                  <p className="text-base font-bold text-violet-700">{"\u00A3"}{Math.round(data.stockpileSummary.savingsTotal)}</p>
+                </div>
+              </div>
             </Link>
-            <Link href="/stockpile?filter=water" className={`rounded-xl border p-2.5 active:scale-[0.98] transition-transform ${
-              data.stockpileSummary.waterDays < 7 ? "text-red-600 bg-red-50 border-red-200" :
-              data.stockpileSummary.waterDays < 30 ? "text-amber-600 bg-amber-50 border-amber-200" :
-              "text-green-600 bg-green-50 border-green-200"
-            }`}>
-              <p className="text-[10px] font-semibold uppercase opacity-70">Water</p>
-              <p className="text-lg font-bold">{data.stockpileSummary.waterDays > 0 ? `${data.stockpileSummary.waterDays}d` : "—"}</p>
-            </Link>
-            <Link href="/stockpile?filter=cash" className="rounded-xl border p-2.5 text-emerald-600 bg-emerald-50 border-emerald-200 active:scale-[0.98] transition-transform">
-              <p className="text-[10px] font-semibold uppercase opacity-70">Cash</p>
-              <p className="text-lg font-bold">{"\u00A3"}{Math.round(data.stockpileSummary.cashTotal)}</p>
-            </Link>
-            <Link href="/stockpile?filter=gold" className="rounded-xl border p-2.5 text-yellow-700 bg-yellow-50 border-yellow-200 active:scale-[0.98] transition-transform">
-              <p className="text-[10px] font-semibold uppercase opacity-70">Gold</p>
-              <p className="text-lg font-bold">{data.stockpileSummary.goldOz > 0 ? `${data.stockpileSummary.goldOz}oz` : "—"}</p>
-            </Link>
-            <Link href="/stockpile?filter=savings" className="rounded-xl border p-2.5 text-violet-600 bg-violet-50 border-violet-200 active:scale-[0.98] transition-transform">
-              <p className="text-[10px] font-semibold uppercase opacity-70">Savings</p>
-              <p className="text-lg font-bold">{"\u00A3"}{Math.round(data.stockpileSummary.savingsTotal)}</p>
-            </Link>
-            <Link href="/stockpile?filter=energy" className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200 active:scale-[0.98] transition-transform">
-              <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>
-              <p className="text-lg font-bold">{data.stockpileSummary.energyItems} <span className="text-xs font-normal">items</span></p>
-            </Link>
-            <Link href="/stockpile?filter=medicine" className="rounded-xl border p-2.5 text-red-600 bg-red-50 border-red-200 active:scale-[0.98] transition-transform">
-              <p className="text-[10px] font-semibold uppercase opacity-70">Medicine</p>
-              <p className="text-lg font-bold">{data.stockpileSummary.medicineItems} <span className="text-xs font-normal">items</span></p>
-            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/stockpile?filter=energy" className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200 active:scale-[0.98] transition-transform">
+                <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>
+                <p className="text-lg font-bold">{data.stockpileSummary.energyItems} <span className="text-xs font-normal">items</span></p>
+              </Link>
+              <Link href="/stockpile?filter=medicine" className="rounded-xl border p-2.5 text-red-600 bg-red-50 border-red-200 active:scale-[0.98] transition-transform">
+                <p className="text-[10px] font-semibold uppercase opacity-70">Medicine</p>
+                <p className="text-lg font-bold">{data.stockpileSummary.medicineItems} <span className="text-xs font-normal">items</span></p>
+              </Link>
+            </div>
           </div>
         </div>
       )}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { STOCKPILE_CATEGORIES } from "@/lib/constants";
+import { STOCKPILE_CATEGORIES, MONEY_SUBTYPES, isMoneyCategory } from "@/lib/constants";
 import ExpiryBadge from "@/components/ExpiryBadge";
 import type { StockpileItem } from "@/lib/types";
 
@@ -55,7 +55,11 @@ export default function StockpileItemDetailPage() {
     );
   }
 
-  const catInfo = STOCKPILE_CATEGORIES.find((c) => c.value === item.category);
+  const isMoney = isMoneyCategory(item.category);
+  const subType = isMoney ? MONEY_SUBTYPES.find((s) => s.value === item.category) : null;
+  const mainCat = isMoney
+    ? STOCKPILE_CATEGORIES.find((c) => c.value === "money")
+    : STOCKPILE_CATEGORIES.find((c) => c.value === item.category);
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
@@ -71,9 +75,19 @@ export default function StockpileItemDetailPage() {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-gray-900 truncate">{item.name}</h1>
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${catInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
-            {catInfo?.label ?? item.category}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${mainCat?.color ?? "bg-gray-100 text-gray-600"}`}>
+              {mainCat?.label ?? item.category}
+            </span>
+            {subType && (
+              <>
+                <span className="text-[10px] text-gray-300">/</span>
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${subType.color}`}>
+                  {subType.label}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -105,17 +119,17 @@ export default function StockpileItemDetailPage() {
           </div>
         )}
 
-        {item.category === "savings" && item.valueAmount != null && (
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-500">Amount</span>
-            <span className="text-sm font-semibold text-gray-900">{"\u00A3"}{item.valueAmount.toFixed(2)}</span>
-          </div>
-        )}
-
         {item.category === "gold" && (
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Total oz</span>
             <span className="text-sm font-semibold text-gray-900">{item.quantity * 0.25} oz</span>
+          </div>
+        )}
+
+        {item.category === "savings" && item.valueAmount != null && (
+          <div className="flex justify-between">
+            <span className="text-sm text-gray-500">Amount</span>
+            <span className="text-sm font-semibold text-gray-900">{"\u00A3"}{item.valueAmount.toFixed(2)}</span>
           </div>
         )}
 

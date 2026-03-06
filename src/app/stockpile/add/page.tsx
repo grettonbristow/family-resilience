@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { STOCKPILE_CATEGORIES, STOCKPILE_UNITS } from "@/lib/constants";
+import { STOCKPILE_CATEGORIES, MONEY_SUBTYPES, STOCKPILE_UNITS } from "@/lib/constants";
 
 export default function AddStockpileItemPage() {
   const router = useRouter();
@@ -10,7 +10,10 @@ export default function AddStockpileItemPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("food");
+  // mainCategory is what shows in the top picker (food/water/money/energy/medicine)
+  const [mainCategory, setMainCategory] = useState("food");
+  // moneySubType is which money type when mainCategory is "money"
+  const [moneySubType, setMoneySubType] = useState("cash");
   const [quantity, setQuantity] = useState<number>(1);
   const [unit, setUnit] = useState("kg");
   const [caloriesTotal, setCaloriesTotal] = useState<number | "">("");
@@ -20,9 +23,27 @@ export default function AddStockpileItemPage() {
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleCategoryChange = (newCategory: string) => {
-    setCategory(newCategory);
-    const units = STOCKPILE_UNITS[newCategory];
+  // The actual DB category
+  const dbCategory = mainCategory === "money" ? moneySubType : mainCategory;
+
+  const handleMainCategoryChange = (newCat: string) => {
+    setMainCategory(newCat);
+    setCaloriesTotal("");
+    setValueAmount("");
+    setDaysSupply("");
+    if (newCat === "money") {
+      setMoneySubType("cash");
+      setUnit("£");
+    } else {
+      const units = STOCKPILE_UNITS[newCat];
+      if (units && units.length > 0) setUnit(units[0]);
+    }
+  };
+
+  const handleMoneySubTypeChange = (subType: string) => {
+    setMoneySubType(subType);
+    setValueAmount("");
+    const units = STOCKPILE_UNITS[subType];
     if (units && units.length > 0) setUnit(units[0]);
   };
 
@@ -39,12 +60,12 @@ export default function AddStockpileItemPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          category,
+          category: dbCategory,
           quantity,
           unit,
-          caloriesTotal: category === "food" && caloriesTotal !== "" ? caloriesTotal : null,
-          valueAmount: (category === "cash" || category === "gold" || category === "savings") && valueAmount !== "" ? valueAmount : null,
-          daysSupply: (category === "energy" || category === "medicine") && daysSupply !== "" ? daysSupply : null,
+          caloriesTotal: mainCategory === "food" && caloriesTotal !== "" ? caloriesTotal : null,
+          valueAmount: mainCategory === "money" && valueAmount !== "" ? valueAmount : null,
+          daysSupply: (mainCategory === "energy" || mainCategory === "medicine") && daysSupply !== "" ? daysSupply : null,
           expiryDate: expiryDate || null,
           location: location.trim() || null,
           notes: notes.trim() || null,
@@ -64,7 +85,7 @@ export default function AddStockpileItemPage() {
     }
   };
 
-  const units = STOCKPILE_UNITS[category] || ["units"];
+  const units = STOCKPILE_UNITS[dbCategory] || ["units"];
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
@@ -101,14 +122,14 @@ export default function AddStockpileItemPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Category <span className="text-red-400">*</span>
           </label>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-5 gap-1.5">
             {STOCKPILE_CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
                 type="button"
-                onClick={() => handleCategoryChange(cat.value)}
+                onClick={() => handleMainCategoryChange(cat.value)}
                 className={`px-2 py-2.5 rounded-xl text-xs font-semibold transition-all text-center ${
-                  category === cat.value
+                  mainCategory === cat.value
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-600 active:bg-gray-200"
                 }`}
@@ -118,6 +139,29 @@ export default function AddStockpileItemPage() {
             ))}
           </div>
         </div>
+
+        {/* Money sub-type picker */}
+        {mainCategory === "money" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {MONEY_SUBTYPES.map((sub) => (
+                <button
+                  key={sub.value}
+                  type="button"
+                  onClick={() => handleMoneySubTypeChange(sub.value)}
+                  className={`px-2 py-2.5 rounded-xl text-xs font-semibold transition-all text-center ${
+                    moneySubType === sub.value
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 active:bg-gray-200"
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -152,7 +196,7 @@ export default function AddStockpileItemPage() {
         </div>
 
         {/* Conditional fields */}
-        {category === "food" && (
+        {mainCategory === "food" && (
           <div>
             <label htmlFor="calories" className="block text-sm font-medium text-gray-700 mb-1.5">
               Total Calories
@@ -170,7 +214,7 @@ export default function AddStockpileItemPage() {
           </div>
         )}
 
-        {category === "cash" && (
+        {mainCategory === "money" && moneySubType === "cash" && (
           <div>
             <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1.5">
               Value ({"\u00A3"})
@@ -188,7 +232,7 @@ export default function AddStockpileItemPage() {
           </div>
         )}
 
-        {category === "gold" && (
+        {mainCategory === "money" && moneySubType === "gold" && (
           <div>
             <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1.5">
               Estimated Value ({"\u00A3"})
@@ -207,7 +251,7 @@ export default function AddStockpileItemPage() {
           </div>
         )}
 
-        {category === "savings" && (
+        {mainCategory === "money" && moneySubType === "savings" && (
           <div>
             <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1.5">
               Amount ({"\u00A3"})
@@ -225,7 +269,7 @@ export default function AddStockpileItemPage() {
           </div>
         )}
 
-        {(category === "energy" || category === "medicine") && (
+        {(mainCategory === "energy" || mainCategory === "medicine") && (
           <div>
             <label htmlFor="days" className="block text-sm font-medium text-gray-700 mb-1.5">
               Estimated Days Supply
