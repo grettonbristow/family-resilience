@@ -13,9 +13,34 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetch("/api/dashboard")
-      .then((res) => res.json())
-      .then(setData)
-      .catch(console.error)
+      .then((res) => {
+        if (!res.ok) throw new Error("Dashboard API failed");
+        return res.json();
+      })
+      .then((d) => {
+        // Validate shape before setting
+        if (d && Array.isArray(d.scenarioSummaries)) {
+          setData(d);
+        } else {
+          // API returned an error object or unexpected shape — use empty defaults
+          setData({
+            overallReadiness: 0,
+            expiringItems: [],
+            lowStockItems: [],
+            scenarioSummaries: [],
+            totalSupplies: 0,
+          });
+        }
+      })
+      .catch(() => {
+        setData({
+          overallReadiness: 0,
+          expiringItems: [],
+          lowStockItems: [],
+          scenarioSummaries: [],
+          totalSupplies: 0,
+        });
+      })
       .finally(() => setLoading(false));
   }, []);
 

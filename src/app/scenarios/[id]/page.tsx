@@ -21,6 +21,18 @@ export default function ScenarioDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [addingItemId, setAddingItemId] = useState<number | null>(null);
+  const [addedItemId, setAddedItemId] = useState<number | null>(null);
+
+  const refreshScenario = () => {
+    fetch(`/api/scenarios/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Scenario not found");
+        return res.json();
+      })
+      .then(setScenario)
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch(`/api/scenarios/${id}`)
@@ -58,6 +70,34 @@ export default function ScenarioDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId: item.id, isCompleted: newCompleted }),
     });
+  };
+
+  const addToInventory = async (item: ChecklistItem) => {
+    setAddingItemId(item.id);
+    try {
+      const res = await fetch("/api/supplies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: item.description,
+          category: item.supplyCategory || "other",
+          quantity: item.requiredQuantity || 1,
+          unit: item.requiredUnit || "units",
+          minimumQuantity: 0,
+          expiryDate: null,
+          location: null,
+          notes: null,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to add");
+      setAddedItemId(item.id);
+      refreshScenario();
+      setTimeout(() => setAddedItemId(null), 2000);
+    } catch {
+      // silently fail
+    } finally {
+      setAddingItemId(null);
+    }
   };
 
   const handleDelete = async () => {
@@ -201,6 +241,23 @@ export default function ScenarioDetailPage() {
                                   }}
                                 />
                               </div>
+                              {!isFulfilled && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    addToInventory(item);
+                                  }}
+                                  disabled={addingItemId === item.id}
+                                  className="mt-2 text-xs font-medium text-indigo-600 active:text-indigo-800 disabled:opacity-50"
+                                >
+                                  {addingItemId === item.id
+                                    ? "Adding..."
+                                    : addedItemId === item.id
+                                    ? "Added!"
+                                    : "+ Add to Inventory"}
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
