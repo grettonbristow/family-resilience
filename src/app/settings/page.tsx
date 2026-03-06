@@ -55,8 +55,8 @@ export default function SettingsPage() {
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.back()}
-          aria-label="Go back"
+          onClick={() => router.push("/")}
+          aria-label="Go to dashboard"
           className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center active:scale-95 transition-transform"
         >
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -83,14 +83,14 @@ export default function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors ${
+              className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl transition-colors min-w-0 ${
                 active ? "text-indigo-600" : "text-gray-400 active:text-gray-600"
               }`}
               aria-label={tab.label}
               aria-current={active ? "page" : undefined}
             >
               {tab.icon(active)}
-              <span className="text-[10px] font-semibold">{tab.label}</span>
+              <span className="text-[9px] font-semibold truncate">{tab.label}</span>
             </Link>
           );
         })}

@@ -32,11 +32,11 @@ export const STOCKPILE_CATEGORIES = [
 ] as const;
 
 export const STOCKPILE_UNITS: Record<string, string[]> = {
-  food: ["kg", "g", "tins", "packets", "bags", "bottles", "boxes", "units"],
-  water: ["liters", "gallons", "bottles"],
+  food: ["kg", "g", "liters", "ml", "tins", "packets", "bags", "bottles", "boxes", "jars", "units"],
+  water: ["liters", "gallons", "bottles", "tins"],
   energy: ["liters", "units", "kg", "bottles", "cans"],
   cash: ["£"],
-  medicine: ["tablets", "packets", "bottles", "boxes", "units"],
+  medicine: ["tablets", "packets", "bottles", "boxes", "units", "days"],
 };
 
 export function getStockpileCategoryColor(category: string): string {

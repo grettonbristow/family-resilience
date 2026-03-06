@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { STOCKPILE_CATEGORIES } from "@/lib/constants";
 import ExpiryBadge from "@/components/ExpiryBadge";
 import type { StockpileItem, StockpileSummary } from "@/lib/types";
 
 export default function StockpilePage() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<StockpileItem[]>([]);
   const [summary, setSummary] = useState<StockpileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string | null>(searchParams.get("filter"));
 
   useEffect(() => {
     Promise.all([

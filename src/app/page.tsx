@@ -83,7 +83,7 @@ export default function DashboardPage() {
               "text-green-600 bg-green-50 border-green-200"
             }`}>
               <p className="text-xs font-semibold uppercase opacity-70">Food</p>
-              <p className="text-xl font-bold">{data.stockpileSummary.foodDays}d</p>
+              <p className="text-xl font-bold">{data.stockpileSummary.foodDays > 0 ? `${data.stockpileSummary.foodDays}d` : "—"}</p>
               <div className="w-full bg-white/50 rounded-full h-1.5 mt-1.5">
                 <div
                   className={`h-1.5 rounded-full ${
@@ -100,7 +100,7 @@ export default function DashboardPage() {
               "text-green-600 bg-green-50 border-green-200"
             }`}>
               <p className="text-xs font-semibold uppercase opacity-70">Water</p>
-              <p className="text-xl font-bold">{data.stockpileSummary.waterDays}d</p>
+              <p className="text-xl font-bold">{data.stockpileSummary.waterDays > 0 ? `${data.stockpileSummary.waterDays}d` : "—"}</p>
               <div className="w-full bg-white/50 rounded-full h-1.5 mt-1.5">
                 <div
                   className={`h-1.5 rounded-full ${
@@ -219,16 +219,22 @@ export default function DashboardPage() {
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3 mt-5">
+      <div className="grid grid-cols-3 gap-2.5 mt-5">
+        <Link
+          href="/stockpile/add"
+          className="bg-white rounded-xl border border-gray-200 px-3 py-3 text-center active:scale-[0.98] transition-transform"
+        >
+          <p className="text-sm font-semibold text-indigo-600">Add Stockpile</p>
+        </Link>
         <Link
           href="/inventory/add"
-          className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-center active:scale-[0.98] transition-transform"
+          className="bg-white rounded-xl border border-gray-200 px-3 py-3 text-center active:scale-[0.98] transition-transform"
         >
           <p className="text-sm font-semibold text-indigo-600">Add Supply</p>
         </Link>
         <Link
           href="/scenarios/add"
-          className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-center active:scale-[0.98] transition-transform"
+          className="bg-white rounded-xl border border-gray-200 px-3 py-3 text-center active:scale-[0.98] transition-transform"
         >
           <p className="text-sm font-semibold text-indigo-600">New Scenario</p>
         </Link>

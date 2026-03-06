@@ -128,6 +128,9 @@ export default function EditStockpileItemPage() {
                 type="button"
                 onClick={() => {
                   setCategory(cat.value);
+                  setCaloriesTotal("");
+                  setValueAmount("");
+                  setDaysSupply("");
                   const u = STOCKPILE_UNITS[cat.value];
                   if (u && u.length > 0 && !u.includes(unit)) setUnit(u[0]);
                 }}
