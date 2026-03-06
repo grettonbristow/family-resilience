@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, date, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, timestamp, date, boolean } from "drizzle-orm/pg-core";
 
 export const supplies = pgTable("supplies", {
   id: serial("id").primaryKey(),
@@ -46,6 +46,22 @@ export const supplyLog = pgTable("supply_log", {
   action: text("action").notNull(),
   quantity: integer("quantity").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const stockpileItems = pgTable("stockpile_items", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  quantity: real("quantity").notNull().default(0),
+  unit: text("unit").notNull().default("units"),
+  caloriesTotal: integer("calories_total"),
+  valueAmount: real("value_amount"),
+  daysSupply: real("days_supply"),
+  expiryDate: date("expiry_date"),
+  location: text("location"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const settings = pgTable("settings", {

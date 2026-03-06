@@ -83,6 +83,25 @@ try {
   `;
   console.log("  ✓ settings table ready");
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS "stockpile_items" (
+      "id" serial PRIMARY KEY NOT NULL,
+      "name" text NOT NULL,
+      "category" text NOT NULL,
+      "quantity" real NOT NULL DEFAULT 0,
+      "unit" text NOT NULL DEFAULT 'units',
+      "calories_total" integer,
+      "value_amount" real,
+      "days_supply" real,
+      "expiry_date" date,
+      "location" text,
+      "notes" text,
+      "created_at" timestamp DEFAULT now() NOT NULL,
+      "updated_at" timestamp DEFAULT now() NOT NULL
+    )
+  `;
+  console.log("  ✓ stockpile_items table ready");
+
   // Verify
   const tables = await sql`
     SELECT table_name FROM information_schema.tables

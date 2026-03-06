@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { supplies, scenarios, checklistItems, settings } from "@/db/schema";
+import { supplies, scenarios, checklistItems, settings, stockpileItems } from "@/db/schema";
 import { eq, sql, lte, gte } from "drizzle-orm";
 
 export async function GET() {
@@ -73,12 +73,46 @@ export async function GET() {
         ? Math.round(scenarioSummaries.reduce((sum, s) => sum + s.readiness, 0) / scenarioSummaries.length)
         : 0;
 
+    // Stockpile summary
+    const householdSize = settingsRows[0]?.householdSize ?? 2;
+    const stockpile = await db.select().from(stockpileItems);
+
+    const totalCalories = stockpile
+      .filter((i) => i.category === "food" && i.caloriesTotal)
+      .reduce((sum, i) => sum + (i.caloriesTotal ?? 0), 0);
+    const foodDays = householdSize > 0 ? Math.round((totalCalories / (householdSize * 2000)) * 10) / 10 : 0;
+
+    const waterLiters = stockpile
+      .filter((i) => i.category === "water")
+      .reduce((sum, i) => {
+        if (i.unit === "liters") return sum + i.quantity;
+        if (i.unit === "gallons") return sum + i.quantity * 3.785;
+        if (i.unit === "bottles") return sum + i.quantity * 0.5;
+        return sum + i.quantity;
+      }, 0);
+    const waterDays = householdSize > 0 ? Math.round((waterLiters / (householdSize * 3)) * 10) / 10 : 0;
+
+    const cashTotal = stockpile
+      .filter((i) => i.category === "cash")
+      .reduce((sum, i) => sum + (i.valueAmount ?? 0), 0);
+
+    const energyItems = stockpile.filter((i) => i.category === "energy").length;
+    const medicineItems = stockpile.filter((i) => i.category === "medicine").length;
+
     return NextResponse.json({
       overallReadiness,
       expiringItems,
       lowStockItems,
       scenarioSummaries,
       totalSupplies,
+      stockpileSummary: {
+        foodDays,
+        waterDays,
+        cashTotal,
+        energyItems,
+        medicineItems,
+        totalItems: stockpile.length,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch dashboard:", error);

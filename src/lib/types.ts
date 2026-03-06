@@ -43,6 +43,31 @@ export type SupplyLogEntry = {
   createdAt: string;
 };
 
+export type StockpileItem = {
+  id: number;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  caloriesTotal: number | null;
+  valueAmount: number | null;
+  daysSupply: number | null;
+  expiryDate: string | null;
+  location: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StockpileSummary = {
+  foodDays: number;
+  waterDays: number;
+  cashTotal: number;
+  energyItems: number;
+  medicineItems: number;
+  totalItems: number;
+};
+
 export type Settings = {
   householdSize: number;
   expiryWarningDays: number;
@@ -55,4 +80,5 @@ export type DashboardData = {
   lowStockItems: Supply[];
   scenarioSummaries: { id: number; name: string; category: string; readiness: number }[];
   totalSupplies: number;
+  stockpileSummary: StockpileSummary;
 };

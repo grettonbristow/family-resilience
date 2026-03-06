@@ -29,6 +29,7 @@ export default function DashboardPage() {
             lowStockItems: [],
             scenarioSummaries: [],
             totalSupplies: 0,
+            stockpileSummary: { foodDays: 0, waterDays: 0, cashTotal: 0, energyItems: 0, medicineItems: 0, totalItems: 0 },
           });
         }
       })
@@ -39,6 +40,7 @@ export default function DashboardPage() {
           lowStockItems: [],
           scenarioSummaries: [],
           totalSupplies: 0,
+          stockpileSummary: { foodDays: 0, waterDays: 0, cashTotal: 0, energyItems: 0, medicineItems: 0, totalItems: 0 },
         });
       })
       .finally(() => setLoading(false));
@@ -69,6 +71,57 @@ export default function DashboardPage() {
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Family Resilience</h1>
       <p className="text-sm text-gray-500 mb-5">{data.totalSupplies} supplies tracked</p>
+
+      {/* Stockpile preparedness */}
+      {data.stockpileSummary && (
+        <div className="mb-5">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Preparedness</h2>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Link href="/stockpile?filter=food" className={`rounded-xl border p-3 active:scale-[0.98] transition-transform ${
+              data.stockpileSummary.foodDays < 7 ? "text-red-600 bg-red-50 border-red-200" :
+              data.stockpileSummary.foodDays < 30 ? "text-amber-600 bg-amber-50 border-amber-200" :
+              "text-green-600 bg-green-50 border-green-200"
+            }`}>
+              <p className="text-xs font-semibold uppercase opacity-70">Food</p>
+              <p className="text-xl font-bold">{data.stockpileSummary.foodDays}d</p>
+              <div className="w-full bg-white/50 rounded-full h-1.5 mt-1.5">
+                <div
+                  className={`h-1.5 rounded-full ${
+                    data.stockpileSummary.foodDays < 7 ? "bg-red-500" :
+                    data.stockpileSummary.foodDays < 30 ? "bg-amber-500" : "bg-green-500"
+                  }`}
+                  style={{ width: `${Math.min(100, (data.stockpileSummary.foodDays / 90) * 100)}%` }}
+                />
+              </div>
+            </Link>
+            <Link href="/stockpile?filter=water" className={`rounded-xl border p-3 active:scale-[0.98] transition-transform ${
+              data.stockpileSummary.waterDays < 7 ? "text-red-600 bg-red-50 border-red-200" :
+              data.stockpileSummary.waterDays < 30 ? "text-amber-600 bg-amber-50 border-amber-200" :
+              "text-green-600 bg-green-50 border-green-200"
+            }`}>
+              <p className="text-xs font-semibold uppercase opacity-70">Water</p>
+              <p className="text-xl font-bold">{data.stockpileSummary.waterDays}d</p>
+              <div className="w-full bg-white/50 rounded-full h-1.5 mt-1.5">
+                <div
+                  className={`h-1.5 rounded-full ${
+                    data.stockpileSummary.waterDays < 7 ? "bg-red-500" :
+                    data.stockpileSummary.waterDays < 30 ? "bg-amber-500" : "bg-green-500"
+                  }`}
+                  style={{ width: `${Math.min(100, (data.stockpileSummary.waterDays / 90) * 100)}%` }}
+                />
+              </div>
+            </Link>
+            <Link href="/stockpile?filter=cash" className="rounded-xl border p-3 text-emerald-600 bg-emerald-50 border-emerald-200 active:scale-[0.98] transition-transform">
+              <p className="text-xs font-semibold uppercase opacity-70">Cash</p>
+              <p className="text-xl font-bold">{"\u00A3"}{Math.round(data.stockpileSummary.cashTotal)}</p>
+            </Link>
+            <Link href="/stockpile" className="rounded-xl border p-3 text-gray-600 bg-gray-50 border-gray-200 active:scale-[0.98] transition-transform">
+              <p className="text-xs font-semibold uppercase opacity-70">Energy / Meds</p>
+              <p className="text-xl font-bold">{data.stockpileSummary.energyItems + data.stockpileSummary.medicineItems} <span className="text-sm font-normal">items</span></p>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Readiness score */}
       {hasScenarios ? (
