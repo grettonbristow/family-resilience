@@ -102,6 +102,22 @@ try {
   `;
   console.log("  ✓ stockpile_items table ready");
 
+  // Add children and pets columns to settings
+  try {
+    await sql`ALTER TABLE "settings" ADD COLUMN "children" jsonb DEFAULT '[]'`;
+    console.log("  ✓ added children column to settings");
+  } catch (e) {
+    if (e.message?.includes("already exists")) console.log("  ✓ children column already exists");
+    else throw e;
+  }
+  try {
+    await sql`ALTER TABLE "settings" ADD COLUMN "pets" jsonb DEFAULT '[]'`;
+    console.log("  ✓ added pets column to settings");
+  } catch (e) {
+    if (e.message?.includes("already exists")) console.log("  ✓ pets column already exists");
+    else throw e;
+  }
+
   // Verify
   const tables = await sql`
     SELECT table_name FROM information_schema.tables

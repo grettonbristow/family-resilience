@@ -32,6 +32,11 @@ export async function GET() {
       .filter((i) => i.category === "cash")
       .reduce((sum, i) => sum + (i.valueAmount ?? 0), 0);
 
+    // Gold: sum quantity (in 1/4 oz coins)
+    const goldOz = items
+      .filter((i) => i.category === "gold")
+      .reduce((sum, i) => sum + i.quantity * 0.25, 0);
+
     // Energy: count items
     const energyItems = items.filter((i) => i.category === "energy").length;
 
@@ -42,6 +47,7 @@ export async function GET() {
       foodDays,
       waterDays,
       cashTotal,
+      goldOz,
       energyItems,
       medicineItems,
       totalItems: items.length,

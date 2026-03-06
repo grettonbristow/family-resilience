@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
-    if (!["food", "water", "energy", "cash", "medicine"].includes(category)) {
+    if (!["food", "water", "energy", "cash", "gold", "medicine"].includes(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 

@@ -63,13 +63,26 @@ export type StockpileSummary = {
   foodDays: number;
   waterDays: number;
   cashTotal: number;
+  goldOz: number;
   energyItems: number;
   medicineItems: number;
   totalItems: number;
 };
 
+export type Child = {
+  name: string;
+  ageYears: number;
+};
+
+export type Pet = {
+  name: string;
+  type: string;
+};
+
 export type Settings = {
   householdSize: number;
+  children: Child[];
+  pets: Pet[];
   expiryWarningDays: number;
   lowStockAlertEnabled: boolean;
 };

@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { Settings } from "@/lib/types";
+import type { Settings, Child, Pet } from "@/lib/types";
 
 export default function SettingsPage() {
   const router = useRouter();
   const [householdSize, setHouseholdSize] = useState(2);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [expiryWarningDays, setExpiryWarningDays] = useState(30);
   const [lowStockAlertEnabled, setLowStockAlertEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -18,12 +20,26 @@ export default function SettingsPage() {
       .then((res) => res.json())
       .then((data: Settings) => {
         setHouseholdSize(data.householdSize);
+        setChildren(data.children ?? []);
+        setPets(data.pets ?? []);
         setExpiryWarningDays(data.expiryWarningDays);
         setLowStockAlertEnabled(data.lowStockAlertEnabled);
       })
       .catch(() => setMessage({ type: "error", text: "Failed to load settings" }))
       .finally(() => setLoading(false));
   }, []);
+
+  const addChild = () => setChildren([...children, { name: "", ageYears: 0 }]);
+  const removeChild = (idx: number) => setChildren(children.filter((_, i) => i !== idx));
+  const updateChild = (idx: number, field: keyof Child, value: string | number) => {
+    setChildren(children.map((c, i) => i === idx ? { ...c, [field]: value } : c));
+  };
+
+  const addPet = () => setPets([...pets, { name: "", type: "dog" }]);
+  const removePet = (idx: number) => setPets(pets.filter((_, i) => i !== idx));
+  const updatePet = (idx: number, field: keyof Pet, value: string) => {
+    setPets(pets.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -32,7 +48,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ householdSize, expiryWarningDays, lowStockAlertEnabled }),
+        body: JSON.stringify({ householdSize, children, pets, expiryWarningDays, lowStockAlertEnabled }),
       });
       if (!res.ok) throw new Error("Failed to save");
       setMessage({ type: "success", text: "Settings saved" });
@@ -96,6 +112,108 @@ export default function SettingsPage() {
             </div>
             <p className="text-xs text-gray-400 mt-1">Used by AI to scale supply recommendations</p>
           </div>
+        </div>
+
+        {/* Children */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-900">Children</h2>
+            <button
+              type="button"
+              onClick={addChild}
+              className="text-xs font-semibold text-indigo-600 px-3 py-1.5 bg-indigo-50 rounded-lg active:bg-indigo-100"
+            >
+              + Add Child
+            </button>
+          </div>
+          {children.length === 0 && (
+            <p className="text-xs text-gray-400">No children added. Tap + to add.</p>
+          )}
+          {children.map((child, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={child.name}
+                onChange={(e) => updateChild(idx, "name", e.target.value)}
+                placeholder="Name"
+                className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
+              />
+              <input
+                type="number"
+                min={0}
+                max={17}
+                value={child.ageYears}
+                onChange={(e) => updateChild(idx, "ageYears", parseInt(e.target.value) || 0)}
+                className="w-16 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white text-center"
+              />
+              <span className="text-xs text-gray-400 shrink-0">yrs</span>
+              <button
+                type="button"
+                onClick={() => removeChild(idx)}
+                className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-400 active:bg-red-100 shrink-0"
+                aria-label="Remove child"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          {children.some((c) => c.ageYears <= 2) && (
+            <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              Toddlers need extra supplies: milk, nappies, formula, baby food
+            </p>
+          )}
+        </div>
+
+        {/* Pets */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-900">Pets</h2>
+            <button
+              type="button"
+              onClick={addPet}
+              className="text-xs font-semibold text-indigo-600 px-3 py-1.5 bg-indigo-50 rounded-lg active:bg-indigo-100"
+            >
+              + Add Pet
+            </button>
+          </div>
+          {pets.length === 0 && (
+            <p className="text-xs text-gray-400">No pets added. Tap + to add.</p>
+          )}
+          {pets.map((pet, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={pet.name}
+                onChange={(e) => updatePet(idx, "name", e.target.value)}
+                placeholder="Name"
+                className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
+              />
+              <select
+                value={pet.type}
+                onChange={(e) => updatePet(idx, "type", e.target.value)}
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white"
+              >
+                <option value="dog">Dog</option>
+                <option value="cat">Cat</option>
+                <option value="bird">Bird</option>
+                <option value="fish">Fish</option>
+                <option value="rabbit">Rabbit</option>
+                <option value="other">Other</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => removePet(idx)}
+                className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-400 active:bg-red-100 shrink-0"
+                aria-label="Remove pet"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">

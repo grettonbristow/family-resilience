@@ -80,34 +80,30 @@ function StockpileContent() {
 
       {/* Duration summary cards */}
       {summary && (
-        <div className="grid grid-cols-2 gap-2.5 mb-5">
-          <div className={`rounded-xl border p-3 ${getDurationColor(summary.foodDays)}`}>
-            <p className="text-xs font-semibold uppercase opacity-70">Food</p>
-            <p className="text-xl font-bold">{summary.foodDays}d</p>
-            <div className="w-full bg-white/50 rounded-full h-1.5 mt-1.5">
-              <div
-                className={`h-1.5 rounded-full ${getDurationBarColor(summary.foodDays)}`}
-                style={{ width: `${Math.min(100, (summary.foodDays / 90) * 100)}%` }}
-              />
-            </div>
+        <div className="grid grid-cols-3 gap-2 mb-5">
+          <div className={`rounded-xl border p-2.5 ${getDurationColor(summary.foodDays)}`}>
+            <p className="text-[10px] font-semibold uppercase opacity-70">Food</p>
+            <p className="text-lg font-bold">{summary.foodDays > 0 ? `${summary.foodDays}d` : "—"}</p>
           </div>
-          <div className={`rounded-xl border p-3 ${getDurationColor(summary.waterDays)}`}>
-            <p className="text-xs font-semibold uppercase opacity-70">Water</p>
-            <p className="text-xl font-bold">{summary.waterDays}d</p>
-            <div className="w-full bg-white/50 rounded-full h-1.5 mt-1.5">
-              <div
-                className={`h-1.5 rounded-full ${getDurationBarColor(summary.waterDays)}`}
-                style={{ width: `${Math.min(100, (summary.waterDays / 90) * 100)}%` }}
-              />
-            </div>
+          <div className={`rounded-xl border p-2.5 ${getDurationColor(summary.waterDays)}`}>
+            <p className="text-[10px] font-semibold uppercase opacity-70">Water</p>
+            <p className="text-lg font-bold">{summary.waterDays > 0 ? `${summary.waterDays}d` : "—"}</p>
           </div>
-          <div className="rounded-xl border p-3 text-emerald-600 bg-emerald-50 border-emerald-200">
-            <p className="text-xs font-semibold uppercase opacity-70">Cash</p>
-            <p className="text-xl font-bold">{"\u00A3"}{Math.round(summary.cashTotal)}</p>
+          <div className="rounded-xl border p-2.5 text-emerald-600 bg-emerald-50 border-emerald-200">
+            <p className="text-[10px] font-semibold uppercase opacity-70">Cash</p>
+            <p className="text-lg font-bold">{"\u00A3"}{Math.round(summary.cashTotal)}</p>
           </div>
-          <div className="rounded-xl border p-3 text-gray-600 bg-gray-50 border-gray-200">
-            <p className="text-xs font-semibold uppercase opacity-70">Energy / Medicine</p>
-            <p className="text-xl font-bold">{summary.energyItems + summary.medicineItems} <span className="text-sm font-normal">items</span></p>
+          <div className="rounded-xl border p-2.5 text-yellow-700 bg-yellow-50 border-yellow-200">
+            <p className="text-[10px] font-semibold uppercase opacity-70">Gold</p>
+            <p className="text-lg font-bold">{summary.goldOz > 0 ? `${summary.goldOz}oz` : "—"}</p>
+          </div>
+          <div className="rounded-xl border p-2.5 text-amber-600 bg-amber-50 border-amber-200">
+            <p className="text-[10px] font-semibold uppercase opacity-70">Energy</p>
+            <p className="text-lg font-bold">{summary.energyItems}</p>
+          </div>
+          <div className="rounded-xl border p-2.5 text-red-600 bg-red-50 border-red-200">
+            <p className="text-[10px] font-semibold uppercase opacity-70">Medicine</p>
+            <p className="text-lg font-bold">{summary.medicineItems}</p>
           </div>
         </div>
       )}
@@ -186,6 +182,16 @@ function StockpileContent() {
                     {item.category === "food" && item.caloriesTotal && (
                       <span className="text-xs text-gray-400">
                         {item.caloriesTotal.toLocaleString()} cal
+                      </span>
+                    )}
+                    {item.category === "gold" && (
+                      <span className="text-xs text-gray-400">
+                        {item.quantity * 0.25} oz
+                      </span>
+                    )}
+                    {(item.category === "cash" || item.category === "gold") && item.valueAmount != null && (
+                      <span className="text-xs text-gray-400">
+                        {"\u00A3"}{item.category === "gold" ? (item.valueAmount * item.quantity).toFixed(0) : item.valueAmount.toFixed(0)}
                       </span>
                     )}
                     {item.expiryDate && <ExpiryBadge expiryDate={item.expiryDate} />}

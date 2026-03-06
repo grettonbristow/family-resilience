@@ -1,13 +1,9 @@
 export const SUPPLY_CATEGORIES = [
-  { value: "food", label: "Food", color: "bg-orange-100 text-orange-700" },
-  { value: "water", label: "Water", color: "bg-blue-100 text-blue-700" },
-  { value: "medicine", label: "Medicine", color: "bg-red-100 text-red-700" },
   { value: "first_aid", label: "First Aid", color: "bg-pink-100 text-pink-700" },
   { value: "tools", label: "Tools", color: "bg-gray-100 text-gray-700" },
   { value: "fuel", label: "Fuel", color: "bg-amber-100 text-amber-700" },
   { value: "documents", label: "Documents", color: "bg-indigo-100 text-indigo-700" },
   { value: "communication", label: "Comms", color: "bg-purple-100 text-purple-700" },
-  { value: "financial", label: "Financial", color: "bg-emerald-100 text-emerald-700" },
   { value: "hygiene", label: "Hygiene", color: "bg-teal-100 text-teal-700" },
   { value: "clothing", label: "Clothing", color: "bg-cyan-100 text-cyan-700" },
   { value: "other", label: "Other", color: "bg-slate-100 text-slate-700" },
@@ -28,6 +24,7 @@ export const STOCKPILE_CATEGORIES = [
   { value: "water", label: "Water", color: "bg-blue-100 text-blue-700", icon: "💧" },
   { value: "energy", label: "Energy", color: "bg-amber-100 text-amber-700", icon: "⚡" },
   { value: "cash", label: "Cash", color: "bg-emerald-100 text-emerald-700", icon: "💷" },
+  { value: "gold", label: "Gold", color: "bg-yellow-100 text-yellow-700", icon: "🪙" },
   { value: "medicine", label: "Medicine", color: "bg-red-100 text-red-700", icon: "💊" },
 ] as const;
 
@@ -36,6 +33,7 @@ export const STOCKPILE_UNITS: Record<string, string[]> = {
   water: ["liters", "gallons", "bottles", "tins"],
   energy: ["liters", "units", "kg", "bottles", "cans"],
   cash: ["£"],
+  gold: ["1/4 oz coins"],
   medicine: ["tablets", "packets", "bottles", "boxes", "units", "days"],
 };
 

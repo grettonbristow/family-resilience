@@ -98,6 +98,20 @@ export default function StockpileItemDetailPage() {
           </div>
         )}
 
+        {item.category === "gold" && item.valueAmount != null && (
+          <div className="flex justify-between">
+            <span className="text-sm text-gray-500">Value per coin</span>
+            <span className="text-sm font-semibold text-gray-900">{"\u00A3"}{item.valueAmount.toFixed(2)}</span>
+          </div>
+        )}
+
+        {item.category === "gold" && (
+          <div className="flex justify-between">
+            <span className="text-sm text-gray-500">Total oz</span>
+            <span className="text-sm font-semibold text-gray-900">{item.quantity * 0.25} oz</span>
+          </div>
+        )}
+
         {(item.category === "energy" || item.category === "medicine") && item.daysSupply != null && (
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Days Supply</span>

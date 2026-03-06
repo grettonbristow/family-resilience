@@ -43,7 +43,7 @@ export default function AddStockpileItemPage() {
           quantity,
           unit,
           caloriesTotal: category === "food" && caloriesTotal !== "" ? caloriesTotal : null,
-          valueAmount: category === "cash" && valueAmount !== "" ? valueAmount : null,
+          valueAmount: (category === "cash" || category === "gold") && valueAmount !== "" ? valueAmount : null,
           daysSupply: (category === "energy" || category === "medicine") && daysSupply !== "" ? daysSupply : null,
           expiryDate: expiryDate || null,
           location: location.trim() || null,
@@ -101,7 +101,7 @@ export default function AddStockpileItemPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Category <span className="text-red-400">*</span>
           </label>
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             {STOCKPILE_CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
@@ -185,6 +185,25 @@ export default function AddStockpileItemPage() {
               placeholder="Amount in pounds"
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
             />
+          </div>
+        )}
+
+        {category === "gold" && (
+          <div>
+            <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Estimated Value ({"\u00A3"})
+            </label>
+            <input
+              id="value"
+              type="number"
+              min={0}
+              step="0.01"
+              value={valueAmount}
+              onChange={(e) => setValueAmount(e.target.value ? parseFloat(e.target.value) : "")}
+              placeholder="Current value per coin in pounds"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
+            />
+            <p className="text-xs text-gray-400 mt-1">Value per 1/4 oz coin for tracking total worth</p>
           </div>
         )}
 

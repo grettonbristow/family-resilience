@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, real, timestamp, date, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, timestamp, date, boolean, jsonb } from "drizzle-orm/pg-core";
 
 export const supplies = pgTable("supplies", {
   id: serial("id").primaryKey(),
@@ -67,6 +67,8 @@ export const stockpileItems = pgTable("stockpile_items", {
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
   householdSize: integer("household_size").default(2),
+  children: jsonb("children").default("[]"),
+  pets: jsonb("pets").default("[]"),
   expiryWarningDays: integer("expiry_warning_days").default(30),
   lowStockAlertEnabled: boolean("low_stock_alert_enabled").default(true),
   updatedAt: timestamp("updated_at").defaultNow(),
