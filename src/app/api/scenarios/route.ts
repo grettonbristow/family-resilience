@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { scenarios, checklistItems, supplies } from "@/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { scenarios, checklistItems } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { isStockpileCategory } from "@/lib/constants";
 
 async function computeReadiness(scenarioId: number): Promise<number> {
@@ -12,29 +12,7 @@ async function computeReadiness(scenarioId: number): Promise<number> {
 
   if (items.length === 0) return 100;
 
-  let fulfilled = 0;
-
-  for (const item of items) {
-    if (item.itemType !== "supply") {
-      if (item.isCompleted) fulfilled++;
-      continue;
-    }
-
-    if (item.supplyCategory && item.requiredQuantity) {
-      const totals = await db
-        .select({ total: sql<number>`COALESCE(SUM(quantity), 0)` })
-        .from(supplies)
-        .where(eq(supplies.category, item.supplyCategory));
-
-      const current = Number(totals[0]?.total ?? 0);
-      if (current >= item.requiredQuantity) {
-        fulfilled++;
-      }
-    } else if (item.isCompleted) {
-      fulfilled++;
-    }
-  }
-
+  const fulfilled = items.filter((item) => item.isCompleted).length;
   return Math.round((fulfilled / items.length) * 100);
 }
 

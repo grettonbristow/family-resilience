@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { supplies, scenarios, checklistItems, settings, stockpileItems } from "@/db/schema";
-import { eq, sql, lte, gte } from "drizzle-orm";
+import { eq, sql, lte } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -42,22 +42,7 @@ export async function GET() {
 
         if (items.length === 0) return { id: s.id, name: s.name, category: s.category, readiness: 100 };
 
-        let fulfilled = 0;
-        for (const item of items) {
-          if (item.itemType !== "supply") {
-            if (item.isCompleted) fulfilled++;
-            continue;
-          }
-          if (item.supplyCategory && item.requiredQuantity) {
-            const totals = await db
-              .select({ total: sql<number>`COALESCE(SUM(quantity), 0)` })
-              .from(supplies)
-              .where(eq(supplies.category, item.supplyCategory));
-            if (Number(totals[0]?.total ?? 0) >= item.requiredQuantity) fulfilled++;
-          } else if (item.isCompleted) {
-            fulfilled++;
-          }
-        }
+        const fulfilled = items.filter((item) => item.isCompleted).length;
 
         return {
           id: s.id,

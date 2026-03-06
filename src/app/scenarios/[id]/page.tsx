@@ -47,8 +47,6 @@ export default function ScenarioDetailPage() {
   }, [id]);
 
   const handleToggle = async (item: ChecklistItem) => {
-    if (item.itemType === "supply" && item.currentQuantity !== undefined) return;
-
     const newCompleted = !item.isCompleted;
 
     setScenario((prev) => {
@@ -56,12 +54,7 @@ export default function ScenarioDetailPage() {
       const updated = prev.checklistItems.map((i) =>
         i.id === item.id ? { ...i, isCompleted: newCompleted } : i
       );
-      const fulfilled = updated.filter((i) => {
-        if (i.itemType === "supply" && i.requiredQuantity && i.currentQuantity !== undefined) {
-          return i.currentQuantity >= i.requiredQuantity;
-        }
-        return i.isCompleted;
-      }).length;
+      const fulfilled = updated.filter((i) => i.isCompleted).length;
       const readiness = updated.length > 0 ? Math.round((fulfilled / updated.length) * 100) : 100;
       return { ...prev, checklistItems: updated, readiness };
     });
@@ -208,50 +201,34 @@ export default function ScenarioDetailPage() {
               </h2>
               <div className="space-y-1.5">
                 {items.map((item) => {
-                  const isSupply = item.itemType === "supply" && item.requiredQuantity && item.currentQuantity !== undefined;
-                  const isFulfilled = isSupply
-                    ? item.currentQuantity! >= item.requiredQuantity!
-                    : item.isCompleted;
+                  const hasQuantityInfo = item.itemType === "supply" && item.requiredQuantity && item.currentQuantity !== undefined;
+                  const isFulfilled = item.isCompleted;
 
                   return (
                     <div
                       key={item.id}
                       onClick={() => handleToggle(item)}
-                      className={`rounded-xl px-3 py-2.5 border transition-colors ${
-                        isSupply ? "cursor-default" : "cursor-pointer active:scale-[0.99]"
-                      } ${
+                      className={`rounded-xl px-3 py-2.5 border transition-colors cursor-pointer active:scale-[0.99] ${
                         isFulfilled
                           ? "bg-green-50/50 border-green-200"
                           : "bg-white border-gray-200"
                       }`}
                     >
                       <div className="flex items-start gap-2.5">
-                        {isSupply ? (
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                            isFulfilled ? "border-green-500 bg-green-500" : "border-gray-300"
-                          }`}>
-                            {isFulfilled && (
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                        ) : (
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                            isFulfilled ? "border-green-500 bg-green-500" : "border-gray-300"
-                          }`}>
-                            {isFulfilled && (
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                        )}
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                          isFulfilled ? "border-green-500 bg-green-500" : "border-gray-300"
+                        }`}>
+                          {isFulfilled && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm ${isFulfilled ? "text-gray-400 line-through" : "text-gray-700"}`}>
                             {item.description}
                           </p>
-                          {isSupply && (
+                          {hasQuantityInfo && (
                             <div className="mt-1.5">
                               <div className="flex items-center justify-between text-xs mb-1">
                                 <span className={isFulfilled ? "text-green-600" : "text-gray-500"}>

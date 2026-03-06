@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { scenarios, checklistItems, supplies } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+// supplies + sql kept for quantity annotation on legacy items
 
 function parseId(id: string): number | null {
   const num = parseInt(id, 10);
@@ -51,16 +52,7 @@ export async function GET(
     );
 
     // Compute readiness
-    let fulfilled = 0;
-    for (const item of annotatedItems) {
-      if (item.itemType !== "supply") {
-        if (item.isCompleted) fulfilled++;
-      } else if (item.requiredQuantity && item.currentQuantity !== undefined) {
-        if (item.currentQuantity >= item.requiredQuantity) fulfilled++;
-      } else if (item.isCompleted) {
-        fulfilled++;
-      }
-    }
+    const fulfilled = annotatedItems.filter((item) => item.isCompleted).length;
     const readiness = items.length > 0 ? Math.round((fulfilled / items.length) * 100) : 100;
 
     return NextResponse.json({
