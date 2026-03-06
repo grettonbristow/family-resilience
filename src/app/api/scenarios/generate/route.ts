@@ -8,12 +8,12 @@ const GENERATE_PROMPT = `Respond with ONLY a JSON object (no markdown, no code f
 - "checklistItems": array of objects, each with:
   - "description": what is needed (be specific with quantities where relevant)
   - "itemType": one of "supply", "action", "document", "skill"
-  - "supplyCategory": (only if itemType is "supply") one of "food", "water", "medicine", "cash", "savings", "gold", "energy", "first_aid", "tools", "fuel", "documents", "communication", "hygiene", "clothing", "other"
+  - "supplyCategory": (only if itemType is "supply") one of "first_aid", "tools", "fuel", "documents", "communication", "hygiene", "clothing", "other"
   - "requiredQuantity": (only if itemType is "supply") number needed
-  - "requiredUnit": (only if itemType is "supply") the unit (e.g. "liters", "kg", "units", "days", "£")
+  - "requiredUnit": (only if itemType is "supply") the unit (e.g. "units", "rolls", "bottles", "cans", "boxes", "pairs", "bags", "days")
   - "sortOrder": number for ordering (0 = most important)
 
-For financial items: use "cash" for physical cash (unit "£"), "savings" for emergency funds/savings (unit "£"), "gold" for precious metals.
+IMPORTANT: Do NOT include food, water, medicine, cash, energy, or financial items — those are tracked separately in the stockpile system. Focus only on scenario-specific supplies like tools, first aid kits, documents, communication devices, hygiene products, clothing, and fuel.
 Scale quantities for the given household size. Include a mix of supply, action, document, and skill items. Be practical and specific to UK households where relevant.`;
 
 export async function POST(request: Request) {
@@ -79,12 +79,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "AI returned invalid scenario structure" }, { status: 500 });
       }
 
-      // Normalize any old "financial" supplyCategory to "cash"
-      for (const item of result.checklistItems) {
-        if (item.supplyCategory === "financial") {
-          item.supplyCategory = "cash";
-        }
-      }
+      // Filter out any stockpile-category items the AI might have included
+      const stockpileCats = ["food", "water", "medicine", "cash", "savings", "gold", "energy", "financial"];
+      result.checklistItems = result.checklistItems.filter(
+        (item: Record<string, unknown>) =>
+          item.itemType !== "supply" || !stockpileCats.includes(String(item.supplyCategory || ""))
+      );
 
       return NextResponse.json(result);
     } catch {

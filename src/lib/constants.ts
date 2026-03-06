@@ -38,7 +38,7 @@ export const MONEY_SUBTYPES = [
 export const STOCKPILE_UNITS: Record<string, string[]> = {
   food: ["kg", "g", "liters", "ml", "tins", "packets", "bags", "bottles", "boxes", "jars", "units"],
   water: ["liters", "gallons", "bottles", "tins"],
-  energy: ["liters", "units", "kg", "bottles", "cans"],
+  energy: ["liters", "units", "batteries", "kg", "bottles", "cans"],
   cash: ["£"],
   gold: ["1/4 oz coins"],
   savings: ["£"],

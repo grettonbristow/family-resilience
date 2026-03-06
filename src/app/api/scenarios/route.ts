@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { scenarios, checklistItems, supplies } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
+import { isStockpileCategory } from "@/lib/constants";
 
 async function computeReadiness(scenarioId: number): Promise<number> {
   const items = await db
@@ -80,7 +81,16 @@ export async function POST(request: Request) {
     const scenarioId = newScenario[0].id;
 
     if (body.checklistItems && Array.isArray(body.checklistItems)) {
-      const items = body.checklistItems.map((item: Record<string, unknown>, i: number) => ({
+      // Filter out stockpile-category supply items (food, water, medicine, cash, etc.)
+      // — those are tracked in the stockpile, not in scenarios
+      const filtered = body.checklistItems.filter((item: Record<string, unknown>) => {
+        if (item.itemType === "supply" && item.supplyCategory && isStockpileCategory(String(item.supplyCategory))) {
+          return false;
+        }
+        return true;
+      });
+
+      const items = filtered.map((item: Record<string, unknown>, i: number) => ({
         scenarioId,
         description: String(item.description || ""),
         itemType: String(item.itemType || "supply"),
