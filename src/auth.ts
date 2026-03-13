@@ -1,29 +1,23 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db } from "@/db";
+import { getDb, db } from "@/db";
 import { supplies, scenarios, stockpileItems, settings } from "@/db/schema";
 import { isNull } from "drizzle-orm";
 
-// Wrap adapter methods to defer DB access until runtime (not build time)
-function lazyDrizzleAdapter() {
-  let _adapter: ReturnType<typeof DrizzleAdapter> | null = null;
-  function getAdapter() {
-    if (!_adapter) {
-      _adapter = DrizzleAdapter(db);
-    }
-    return _adapter;
-  }
-
-  return new Proxy({} as ReturnType<typeof DrizzleAdapter>, {
-    get(_target, prop) {
-      return (getAdapter() as unknown as Record<string | symbol, unknown>)[prop];
-    },
-  });
+// Build the adapter with the real DB instance (not the Proxy).
+// At build time getDb() may throw because there's no DATABASE_URL,
+// so we fall back to a dummy — NextAuth only calls adapter methods at runtime.
+let adapter: ReturnType<typeof DrizzleAdapter>;
+try {
+  adapter = DrizzleAdapter(getDb());
+} catch {
+  // Build-time fallback — never actually used at runtime
+  adapter = {} as ReturnType<typeof DrizzleAdapter>;
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: lazyDrizzleAdapter(),
+  adapter,
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
