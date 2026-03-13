@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { STOCKPILE_CATEGORIES, MONEY_SUBTYPES, STOCKPILE_UNITS } from "@/lib/constants";
 
 export default function AddStockpileItemPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanPreview, setScanPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
-  // mainCategory is what shows in the top picker (food/water/money/energy/medicine)
   const [mainCategory, setMainCategory] = useState("food");
-  // moneySubType is which money type when mainCategory is "money"
   const [moneySubType, setMoneySubType] = useState("cash");
   const [quantity, setQuantity] = useState<number>(1);
   const [unit, setUnit] = useState("kg");
@@ -23,7 +24,6 @@ export default function AddStockpileItemPage() {
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
 
-  // The actual DB category
   const dbCategory = mainCategory === "money" ? moneySubType : mainCategory;
 
   const handleMainCategoryChange = (newCat: string) => {
@@ -31,6 +31,7 @@ export default function AddStockpileItemPage() {
     setCaloriesTotal("");
     setValueAmount("");
     setDaysSupply("");
+    setScanPreview(null);
     if (newCat === "money") {
       setMoneySubType("cash");
       setUnit("£");
@@ -45,6 +46,70 @@ export default function AddStockpileItemPage() {
     setValueAmount("");
     const units = STOCKPILE_UNITS[subType];
     if (units && units.length > 0) setUnit(units[0]);
+  };
+
+  const handleScanPhoto = async (file: File) => {
+    setScanning(true);
+    setError(null);
+
+    // Show preview
+    const previewUrl = URL.createObjectURL(file);
+    setScanPreview(previewUrl);
+
+    try {
+      // Read file as base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Strip the data:image/...;base64, prefix
+          const base64Data = result.split(",")[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const mediaType = file.type || "image/jpeg";
+
+      const res = await fetch("/api/stockpile/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mediaType }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Scan failed");
+      }
+
+      const result = await res.json();
+
+      // Pre-fill form with scanned data
+      if (result.name) setName(result.name);
+      if (typeof result.quantity === "number") setQuantity(result.quantity);
+      if (result.unit) {
+        const validUnits = STOCKPILE_UNITS["food"] || [];
+        if (validUnits.includes(result.unit)) {
+          setUnit(result.unit);
+        }
+      }
+      if (typeof result.caloriesTotal === "number") setCaloriesTotal(result.caloriesTotal);
+      if (result.expiryDate) setExpiryDate(result.expiryDate);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Scan failed. You can still enter details manually.");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleScanPhoto(file);
+    }
+    // Reset so the same file can be selected again
+    e.target.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,21 +169,6 @@ export default function AddStockpileItemPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Name <span className="text-red-400">*</span>
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Basmati rice, Tuna tins"
-            required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
-          />
-        </div>
-
-        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Category <span className="text-red-400">*</span>
           </label>
@@ -162,6 +212,71 @@ export default function AddStockpileItemPage() {
             </div>
           </div>
         )}
+
+        {/* Photo scan for food */}
+        {mainCategory === "food" && (
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanning}
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-orange-300 bg-orange-50 rounded-xl text-sm font-medium text-orange-700 active:bg-orange-100 transition-colors disabled:opacity-60"
+            >
+              {scanning ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                  Scanning...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Scan Food Packet
+                </>
+              )}
+            </button>
+            {scanPreview && (
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={scanPreview}
+                  alt="Scanned item"
+                  className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                />
+                {scanning && (
+                  <p className="text-xs text-gray-500">Analysing photo...</p>
+                )}
+                {!scanning && name && (
+                  <p className="text-xs text-green-600">Scanned! Review details below.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+            Name <span className="text-red-400">*</span>
+          </label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Basmati rice, Tuna tins"
+            required
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 bg-white placeholder:text-gray-400"
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
