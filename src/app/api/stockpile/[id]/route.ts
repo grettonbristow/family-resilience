@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { stockpileItems } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 function parseId(id: string): number | null {
   const num = parseInt(id, 10);
@@ -13,13 +14,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const itemId = parseId(id);
     if (itemId === null) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
 
-    const rows = await db.select().from(stockpileItems).where(eq(stockpileItems.id, itemId)).limit(1);
+    const rows = await db.select().from(stockpileItems).where(and(eq(stockpileItems.id, itemId), eq(stockpileItems.userId, userId))).limit(1);
     if (rows.length === 0) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
@@ -36,6 +38,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const itemId = parseId(id);
     if (itemId === null) {
@@ -58,7 +61,7 @@ export async function PUT(
         notes: body.notes !== undefined ? (body.notes?.trim() || null) : undefined,
         updatedAt: new Date(),
       })
-      .where(eq(stockpileItems.id, itemId))
+      .where(and(eq(stockpileItems.id, itemId), eq(stockpileItems.userId, userId)))
       .returning();
 
     if (updated.length === 0) {
@@ -77,13 +80,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const itemId = parseId(id);
     if (itemId === null) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
 
-    await db.delete(stockpileItems).where(eq(stockpileItems.id, itemId));
+    await db.delete(stockpileItems).where(and(eq(stockpileItems.id, itemId), eq(stockpileItems.userId, userId)));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete stockpile item:", error);

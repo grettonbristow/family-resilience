@@ -102,6 +102,88 @@ try {
   `;
   console.log("  ✓ stockpile_items table ready");
 
+  // ---- NextAuth tables ----
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "users" (
+      "id" text PRIMARY KEY NOT NULL,
+      "name" text,
+      "email" text NOT NULL,
+      "emailVerified" timestamp,
+      "image" text
+    )
+  `;
+  console.log("  ✓ users table ready");
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "accounts" (
+      "userId" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "type" text NOT NULL,
+      "provider" text NOT NULL,
+      "providerAccountId" text NOT NULL,
+      "refresh_token" text,
+      "access_token" text,
+      "expires_at" integer,
+      "token_type" text,
+      "scope" text,
+      "id_token" text,
+      "session_state" text,
+      PRIMARY KEY ("provider", "providerAccountId")
+    )
+  `;
+  console.log("  ✓ accounts table ready");
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "sessions" (
+      "sessionToken" text PRIMARY KEY NOT NULL,
+      "userId" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "expires" timestamp NOT NULL
+    )
+  `;
+  console.log("  ✓ sessions table ready");
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "verificationTokens" (
+      "identifier" text NOT NULL,
+      "token" text NOT NULL,
+      "expires" timestamp NOT NULL,
+      PRIMARY KEY ("identifier", "token")
+    )
+  `;
+  console.log("  ✓ verificationTokens table ready");
+
+  // ---- Add user_id to existing tables ----
+
+  for (const table of ["supplies", "scenarios", "stockpile_items", "settings"]) {
+    try {
+      await sql`ALTER TABLE ${sql(table)} ADD COLUMN "user_id" text REFERENCES "users"("id") ON DELETE CASCADE`;
+      console.log(`  ✓ added user_id column to ${table}`);
+    } catch (e) {
+      if (e.message?.includes("already exists")) console.log(`  ✓ user_id column already exists on ${table}`);
+      else throw e;
+    }
+  }
+
+  // Phase 3: Make user_id NOT NULL once all rows have been claimed
+  for (const table of ["supplies", "scenarios", "stockpile_items", "settings"]) {
+    try {
+      const nullRows = await sql`SELECT COUNT(*) as c FROM ${sql(table)} WHERE user_id IS NULL`;
+      if (Number(nullRows[0].c) === 0) {
+        // Check if already NOT NULL
+        const colInfo = await sql`
+          SELECT is_nullable FROM information_schema.columns
+          WHERE table_name = ${table} AND column_name = 'user_id'
+        `;
+        if (colInfo[0]?.is_nullable === "YES") {
+          await sql`ALTER TABLE ${sql(table)} ALTER COLUMN "user_id" SET NOT NULL`;
+          console.log(`  ✓ user_id now NOT NULL on ${table}`);
+        }
+      }
+    } catch (e) {
+      console.log(`  ⚠ Could not enforce NOT NULL on ${table}: ${e.message}`);
+    }
+  }
+
   // Add children and pets columns to settings
   try {
     await sql`ALTER TABLE "settings" ADD COLUMN "children" jsonb DEFAULT '[]'`;

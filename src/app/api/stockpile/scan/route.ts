@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { requireUserId } from "@/lib/auth-utils";
 
 const PRODUCT_PROMPT = `Look at this food product photo. I need you to identify the product from the front label, packaging, or any visible text.
 
@@ -67,6 +68,7 @@ function extractJson(text: string): Record<string, unknown> {
 
 export async function POST(request: Request) {
   try {
+    await requireUserId();
     const body = await request.json();
     const { image, mediaType = "image/jpeg", scanType = "product" } = body;
 

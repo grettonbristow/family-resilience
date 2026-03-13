@@ -33,11 +33,16 @@ function createDb(): DB {
 // Lazy singleton: only connects when first accessed at runtime, not at build time
 const globalForDb = globalThis as unknown as { db: DB };
 
-export const db = new Proxy({} as DB, {
+export function getDb(): DB {
+  if (!globalForDb.db) {
+    globalForDb.db = createDb();
+  }
+  return globalForDb.db;
+}
+
+// Proxy so that imports of `db` work lazily — all property access is forwarded to the real DB
+export const db: DB = new Proxy({} as DB, {
   get(_target, prop) {
-    if (!globalForDb.db) {
-      globalForDb.db = createDb();
-    }
-    return (globalForDb.db as unknown as Record<string | symbol, unknown>)[prop];
+    return (getDb() as unknown as Record<string | symbol, unknown>)[prop];
   },
 });

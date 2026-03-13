@@ -1,25 +1,29 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { supplies } from "@/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 export async function GET(request: Request) {
   try {
+    const userId = await requireUserId();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
-
-    let query = db.select().from(supplies).orderBy(desc(supplies.updatedAt));
 
     if (category) {
       const result = await db
         .select()
         .from(supplies)
-        .where(eq(supplies.category, category))
+        .where(and(eq(supplies.userId, userId), eq(supplies.category, category)))
         .orderBy(desc(supplies.updatedAt));
       return NextResponse.json(result);
     }
 
-    const result = await query;
+    const result = await db
+      .select()
+      .from(supplies)
+      .where(eq(supplies.userId, userId))
+      .orderBy(desc(supplies.updatedAt));
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -30,6 +34,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const userId = await requireUserId();
     const body = await request.json();
 
     if (!body.name?.trim()) {
@@ -43,6 +48,7 @@ export async function POST(request: Request) {
     const newSupply = await db
       .insert(supplies)
       .values({
+        userId,
         name: body.name.trim(),
         category: body.category,
         quantity: typeof body.quantity === "number" ? body.quantity : 0,

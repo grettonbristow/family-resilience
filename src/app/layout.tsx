@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
+import UserMenu from "@/components/UserMenu";
+import { auth } from "@/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,11 +28,14 @@ export const viewport: Viewport = {
   themeColor: "#4f46e5",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+  const isSignedIn = !!session?.user;
+
   return (
     <html lang="en">
       <head>
@@ -39,8 +44,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} font-sans antialiased bg-gray-50 text-gray-900`}
       >
+        {isSignedIn && (
+          <div className="flex justify-end px-4 pt-2">
+            <UserMenu />
+          </div>
+        )}
         <main className="min-h-screen">{children}</main>
-        <BottomNav />
+        {isSignedIn && <BottomNav />}
         <script
           dangerouslySetInnerHTML={{
             __html: `

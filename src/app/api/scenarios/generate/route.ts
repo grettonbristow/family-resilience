@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { requireUserId } from "@/lib/auth-utils";
 
 const GENERATE_PROMPT = `Respond with ONLY a JSON object (no markdown, no code fences, no explanation) with these fields:
 - "name": scenario name
@@ -18,6 +19,7 @@ Scale quantities for the given household size. Include a mix of supply, action, 
 
 export async function POST(request: Request) {
   try {
+    await requireUserId();
     const body = await request.json();
     const { scenarioName, description, householdSize = 2 } = body;
 

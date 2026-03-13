@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { stockpileItems } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 export async function GET(request: Request) {
   try {
+    const userId = await requireUserId();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
 
     let items;
     if (category) {
-      items = await db.select().from(stockpileItems).where(eq(stockpileItems.category, category));
+      items = await db.select().from(stockpileItems).where(and(eq(stockpileItems.userId, userId), eq(stockpileItems.category, category)));
     } else {
-      items = await db.select().from(stockpileItems);
+      items = await db.select().from(stockpileItems).where(eq(stockpileItems.userId, userId));
     }
 
     return NextResponse.json(items);
@@ -24,6 +26,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const userId = await requireUserId();
     const body = await request.json();
     const { name, category, quantity, unit, caloriesTotal, valueAmount, daysSupply, expiryDate, location, notes } = body;
 
@@ -35,6 +38,7 @@ export async function POST(request: Request) {
     }
 
     const inserted = await db.insert(stockpileItems).values({
+      userId,
       name: name.trim(),
       category,
       quantity: typeof quantity === "number" ? quantity : 0,

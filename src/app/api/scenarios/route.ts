@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { scenarios, checklistItems } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { isStockpileCategory } from "@/lib/constants";
+import { requireUserId } from "@/lib/auth-utils";
 
 async function computeReadiness(scenarioId: number): Promise<number> {
   const items = await db
@@ -18,9 +19,11 @@ async function computeReadiness(scenarioId: number): Promise<number> {
 
 export async function GET() {
   try {
+    const userId = await requireUserId();
     const allScenarios = await db
       .select()
       .from(scenarios)
+      .where(eq(scenarios.userId, userId))
       .orderBy(desc(scenarios.createdAt));
 
     const result = await Promise.all(
@@ -40,6 +43,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const userId = await requireUserId();
     const body = await request.json();
 
     if (!body.name?.trim()) {
@@ -49,6 +53,7 @@ export async function POST(request: Request) {
     const newScenario = await db
       .insert(scenarios)
       .values({
+        userId,
         name: body.name.trim(),
         description: body.description?.trim() || null,
         category: body.category || "general",

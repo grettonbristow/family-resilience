@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 export async function GET() {
   try {
-    const rows = await db.select().from(settings).limit(1);
+    const userId = await requireUserId();
+    const rows = await db.select().from(settings).where(eq(settings.userId, userId)).limit(1);
 
     if (rows.length === 0) {
       return NextResponse.json({
@@ -32,6 +34,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const userId = await requireUserId();
     const body = await request.json();
     const householdSize = typeof body.householdSize === "number" ? body.householdSize : 2;
     const children = Array.isArray(body.children) ? body.children : [];
@@ -39,10 +42,10 @@ export async function PUT(request: Request) {
     const expiryWarningDays = typeof body.expiryWarningDays === "number" ? body.expiryWarningDays : 30;
     const lowStockAlertEnabled = body.lowStockAlertEnabled !== false;
 
-    const rows = await db.select().from(settings).limit(1);
+    const rows = await db.select().from(settings).where(eq(settings.userId, userId)).limit(1);
 
     if (rows.length === 0) {
-      await db.insert(settings).values({ householdSize, children, pets, expiryWarningDays, lowStockAlertEnabled });
+      await db.insert(settings).values({ userId, householdSize, children, pets, expiryWarningDays, lowStockAlertEnabled });
     } else {
       await db
         .update(settings)

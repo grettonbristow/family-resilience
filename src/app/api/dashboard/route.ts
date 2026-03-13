@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { supplies, scenarios, checklistItems, settings, stockpileItems } from "@/db/schema";
-import { eq, sql, lte } from "drizzle-orm";
+import { eq, sql, lte, and } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 export async function GET() {
   try {
+    const userId = await requireUserId();
+
     // Get settings for warning days
-    const settingsRows = await db.select().from(settings).limit(1);
+    const settingsRows = await db.select().from(settings).where(eq(settings.userId, userId)).limit(1);
     const warningDays = settingsRows[0]?.expiryWarningDays ?? 30;
 
     // Total supplies count
     const supplyCountResult = await db
       .select({ count: sql<number>`count(*)` })
-      .from(supplies);
+      .from(supplies)
+      .where(eq(supplies.userId, userId));
     const totalSupplies = Number(supplyCountResult[0]?.count ?? 0);
 
     // Expiring items
@@ -23,16 +27,16 @@ export async function GET() {
     const expiringItems = await db
       .select()
       .from(supplies)
-      .where(lte(supplies.expiryDate, warningDateStr));
+      .where(and(eq(supplies.userId, userId), lte(supplies.expiryDate, warningDateStr)));
 
     // Low-stock items
-    const allSupplies = await db.select().from(supplies);
+    const allSupplies = await db.select().from(supplies).where(eq(supplies.userId, userId));
     const lowStockItems = allSupplies.filter(
       (s) => s.minimumQuantity != null && s.quantity <= s.minimumQuantity && s.minimumQuantity > 0
     );
 
     // Scenario readiness
-    const allScenarios = await db.select().from(scenarios);
+    const allScenarios = await db.select().from(scenarios).where(eq(scenarios.userId, userId));
     const scenarioSummaries = await Promise.all(
       allScenarios.map(async (s) => {
         const items = await db
@@ -60,7 +64,7 @@ export async function GET() {
 
     // Stockpile summary
     const householdSize = settingsRows[0]?.householdSize ?? 2;
-    const stockpile = await db.select().from(stockpileItems);
+    const stockpile = await db.select().from(stockpileItems).where(eq(stockpileItems.userId, userId));
 
     const totalCalories = stockpile
       .filter((i) => i.category === "food" && i.caloriesTotal)

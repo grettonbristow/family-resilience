@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { supplies, supplyLog } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 function parseId(id: string): number | null {
   const num = parseInt(id, 10);
@@ -13,6 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const supplyId = parseId(id);
     if (supplyId === null) {
@@ -22,7 +24,7 @@ export async function GET(
     const supply = await db
       .select()
       .from(supplies)
-      .where(eq(supplies.id, supplyId))
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
       .limit(1);
 
     if (supply.length === 0) {
@@ -48,6 +50,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const supplyId = parseId(id);
     if (supplyId === null) {
@@ -69,7 +72,7 @@ export async function PUT(
         notes: body.notes || null,
         updatedAt: new Date(),
       })
-      .where(eq(supplies.id, supplyId))
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
       .returning();
 
     if (updated.length === 0) {
@@ -88,13 +91,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const supplyId = parseId(id);
     if (supplyId === null) {
       return NextResponse.json({ error: "Invalid supply ID" }, { status: 400 });
     }
 
-    await db.delete(supplies).where(eq(supplies.id, supplyId));
+    await db.delete(supplies).where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete supply:", error);

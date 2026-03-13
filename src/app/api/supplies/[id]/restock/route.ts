@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { supplies, supplyLog } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const supplyId = parseInt(id, 10);
     if (Number.isNaN(supplyId)) {
@@ -20,7 +22,7 @@ export async function POST(
     const current = await db
       .select()
       .from(supplies)
-      .where(eq(supplies.id, supplyId))
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
       .limit(1);
 
     if (current.length === 0) {
@@ -32,7 +34,7 @@ export async function POST(
     const updated = await db
       .update(supplies)
       .set({ quantity: newQuantity, updatedAt: new Date() })
-      .where(eq(supplies.id, supplyId))
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
       .returning();
 
     await db.insert(supplyLog).values({

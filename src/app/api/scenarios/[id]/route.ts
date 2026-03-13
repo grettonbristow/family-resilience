@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { scenarios, checklistItems, supplies } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-utils";
 // supplies + sql kept for quantity annotation on legacy items
 
 function parseId(id: string): number | null {
@@ -14,6 +15,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const scenarioId = parseId(id);
     if (scenarioId === null) {
@@ -23,7 +25,7 @@ export async function GET(
     const scenario = await db
       .select()
       .from(scenarios)
-      .where(eq(scenarios.id, scenarioId))
+      .where(and(eq(scenarios.id, scenarioId), eq(scenarios.userId, userId)))
       .limit(1);
 
     if (scenario.length === 0) {
@@ -71,13 +73,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireUserId();
     const { id } = await params;
     const scenarioId = parseId(id);
     if (scenarioId === null) {
       return NextResponse.json({ error: "Invalid scenario ID" }, { status: 400 });
     }
 
-    await db.delete(scenarios).where(eq(scenarios.id, scenarioId));
+    await db.delete(scenarios).where(and(eq(scenarios.id, scenarioId), eq(scenarios.userId, userId)));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete scenario:", error);
