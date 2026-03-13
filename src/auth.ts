@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { getDb, db } from "@/db";
-import { supplies, scenarios, stockpileItems, settings } from "@/db/schema";
+import { supplies, scenarios, stockpileItems, settings, users, accounts, sessions, verificationTokens } from "@/db/schema";
 import { isNull } from "drizzle-orm";
 
 // Build the adapter with the real DB instance (not the Proxy).
@@ -10,7 +10,12 @@ import { isNull } from "drizzle-orm";
 // so we fall back to a dummy — NextAuth only calls adapter methods at runtime.
 let adapter: ReturnType<typeof DrizzleAdapter>;
 try {
-  adapter = DrizzleAdapter(getDb());
+  adapter = DrizzleAdapter(getDb(), {
+    usersTable: users,
+    accountsTable: accounts,
+    sessionsTable: sessions,
+    verificationTokensTable: verificationTokens,
+  });
 } catch {
   // Build-time fallback — never actually used at runtime
   adapter = {} as ReturnType<typeof DrizzleAdapter>;
