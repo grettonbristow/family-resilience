@@ -1,13 +1,20 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname !== "/sign-in") {
-    const signInUrl = new URL("/sign-in", req.nextUrl.origin);
-    signInUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+export function middleware(request: NextRequest) {
+  // Check for NextAuth session cookie
+  const sessionToken =
+    request.cookies.get("__Secure-authjs.session-token") ||
+    request.cookies.get("authjs.session-token");
+
+  if (!sessionToken && request.nextUrl.pathname !== "/sign-in") {
+    const signInUrl = new URL("/sign-in", request.url);
+    signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
     return NextResponse.redirect(signInUrl);
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
