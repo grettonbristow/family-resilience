@@ -19,13 +19,17 @@ function fileToBase64(file: File): Promise<string> {
 export default function AddStockpileItemPage() {
   const router = useRouter();
   const productInputRef = useRef<HTMLInputElement>(null);
+  const nutritionInputRef = useRef<HTMLInputElement>(null);
   const expiryInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [scanningProduct, setScanningProduct] = useState(false);
+  const [scanningNutrition, setScanningNutrition] = useState(false);
   const [scanningExpiry, setScanningExpiry] = useState(false);
   const [productPreview, setProductPreview] = useState<string | null>(null);
+  const [nutritionPreview, setNutritionPreview] = useState<string | null>(null);
   const [expiryPreview, setExpiryPreview] = useState<string | null>(null);
   const [productScanned, setProductScanned] = useState(false);
+  const [nutritionScanned, setNutritionScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
@@ -48,8 +52,10 @@ export default function AddStockpileItemPage() {
     setValueAmount("");
     setDaysSupply("");
     setProductPreview(null);
+    setNutritionPreview(null);
     setExpiryPreview(null);
     setProductScanned(false);
+    setNutritionScanned(false);
     if (newCat === "money") {
       setMoneySubType("cash");
       setUnit("£");
@@ -103,6 +109,44 @@ export default function AddStockpileItemPage() {
       setError(err instanceof Error ? err.message : "Scan failed. You can still enter details manually.");
     } finally {
       setScanningProduct(false);
+    }
+  };
+
+  const handleNutritionScan = async (file: File) => {
+    setScanningNutrition(true);
+    setError(null);
+    setNutritionPreview(URL.createObjectURL(file));
+
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await fetch("/api/stockpile/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: base64,
+          mediaType: file.type || "image/jpeg",
+          scanType: "nutrition",
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Scan failed");
+      }
+
+      const result = await res.json();
+
+      if (typeof result.quantity === "number") setQuantity(result.quantity);
+      if (result.unit) {
+        const validUnits = STOCKPILE_UNITS["food"] || [];
+        if (validUnits.includes(result.unit)) setUnit(result.unit);
+      }
+      if (typeof result.caloriesTotal === "number") setCaloriesTotal(result.caloriesTotal);
+      setNutritionScanned(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read nutrition info. Enter details manually.");
+    } finally {
+      setScanningNutrition(false);
     }
   };
 
@@ -176,7 +220,7 @@ export default function AddStockpileItemPage() {
   };
 
   const units = STOCKPILE_UNITS[dbCategory] || ["units"];
-  const isScanning = scanningProduct || scanningExpiry;
+  const isScanning = scanningProduct || scanningNutrition || scanningExpiry;
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
@@ -239,22 +283,21 @@ export default function AddStockpileItemPage() {
           </div>
         )}
 
-        {/* Photo scan for food — two-step */}
+        {/* Photo scan for food — 3-step (steps 2 & 3 optional) */}
         {mainCategory === "food" && (
           <div className="space-y-2">
-            {/* Step 1: Product photo */}
-            <input
-              ref={productInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleProductScan(file);
-                e.target.value = "";
-              }}
-              className="hidden"
-            />
+            {/* Hidden file inputs */}
+            <input ref={productInputRef} type="file" accept="image/*" capture="environment"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleProductScan(f); e.target.value = ""; }}
+              className="hidden" />
+            <input ref={nutritionInputRef} type="file" accept="image/*" capture="environment"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleNutritionScan(f); e.target.value = ""; }}
+              className="hidden" />
+            <input ref={expiryInputRef} type="file" accept="image/*" capture="environment"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleExpiryScan(f); e.target.value = ""; }}
+              className="hidden" />
+
+            {/* Step 1: Front of packet (required) */}
             <button
               type="button"
               onClick={() => productInputRef.current?.click()}
@@ -272,15 +315,13 @@ export default function AddStockpileItemPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  {productScanned ? "Re-scan Product" : "Scan Front of Packet"}
+                  {productScanned ? "Re-scan Front" : "1. Scan Front of Packet"}
                 </>
               )}
             </button>
             {!productScanned && !scanningProduct && (
-              <p className="text-xs text-gray-400 text-center">Photo the front label showing product name, weight, and nutritional info</p>
+              <p className="text-xs text-gray-400 text-center">Photo the front label to identify the product</p>
             )}
-
-            {/* Product preview */}
             {productPreview && (
               <div className="flex items-center gap-3">
                 <img src={productPreview} alt="Product" className="w-14 h-14 rounded-lg object-cover border border-gray-200" />
@@ -289,21 +330,45 @@ export default function AddStockpileItemPage() {
               </div>
             )}
 
-            {/* Step 2: Expiry date photo (shown after product scan) */}
+            {/* Step 2: Nutrition / quantity (optional, shown after step 1) */}
+            {productScanned && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => nutritionInputRef.current?.click()}
+                  disabled={isScanning}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl text-sm font-medium text-blue-700 active:bg-blue-100 transition-colors disabled:opacity-60"
+                >
+                  {scanningNutrition ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      Reading nutrition info...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      {nutritionScanned ? "Re-scan Nutrition" : "2. Scan Nutrition Label (optional)"}
+                    </>
+                  )}
+                </button>
+                {!nutritionScanned && !scanningNutrition && (
+                  <p className="text-xs text-gray-400 text-center">Photo the back for weight and calorie info — skip if repacking into mylar bags</p>
+                )}
+                {nutritionPreview && (
+                  <div className="flex items-center gap-3">
+                    <img src={nutritionPreview} alt="Nutrition" className="w-14 h-14 rounded-lg object-cover border border-gray-200" />
+                    {scanningNutrition && <p className="text-xs text-gray-500">Reading nutrition panel...</p>}
+                    {nutritionScanned && !scanningNutrition && <p className="text-xs text-green-600">Quantity and calories updated.</p>}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Step 3: Expiry date (optional, shown after step 1) */}
             {productScanned && !expiryDate && (
               <>
-                <input
-                  ref={expiryInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleExpiryScan(file);
-                    e.target.value = "";
-                  }}
-                  className="hidden"
-                />
                 <button
                   type="button"
                   onClick={() => expiryInputRef.current?.click()}
@@ -320,15 +385,13 @@ export default function AddStockpileItemPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      Scan Expiry Date
+                      3. Scan Expiry Date (optional)
                     </>
                   )}
                 </button>
-                <p className="text-xs text-gray-400 text-center">Photo the best-before / use-by date (usually on back or bottom)</p>
+                <p className="text-xs text-gray-400 text-center">Photo the best-before / use-by date — skip if repacking</p>
               </>
             )}
-
-            {/* Expiry preview */}
             {expiryPreview && (
               <div className="flex items-center gap-3">
                 <img src={expiryPreview} alt="Expiry date" className="w-14 h-14 rounded-lg object-cover border border-gray-200" />

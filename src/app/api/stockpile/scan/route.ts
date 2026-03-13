@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-const PRODUCT_PROMPT = `Look at this food product photo. I need you to identify the product from the label, packaging, or any visible text.
+const PRODUCT_PROMPT = `Look at this food product photo. I need you to identify the product from the front label, packaging, or any visible text.
 
 Extract the following and respond with ONLY a JSON object (no markdown, no code fences, no explanation):
 
 - "name": the product name (e.g., "Tilda Basmati Rice", "Heinz Baked Beans")
-- "quantity": numeric amount shown on the packet (weight, volume, or count). Just the number.
-- "unit": the unit for the quantity — must be one of: "kg", "g", "liters", "ml", "tins", "packets", "bags", "bottles", "boxes", "jars", "units"
-- "caloriesTotal": estimated total calories for the FULL quantity. If nutritional info is visible, calculate from it (e.g., if it says 350 kcal per 100g and the packet is 500g, return 1750). If not visible, provide a reasonable estimate based on the product type and quantity.
+- "quantity": numeric amount if visible on the front (weight, volume, or count). Just the number. If not visible, use null.
+- "unit": the unit for the quantity — must be one of: "kg", "g", "liters", "ml", "tins", "packets", "bags", "bottles", "boxes", "jars", "units". If quantity is null, use null.
+- "caloriesTotal": estimated total calories based on product type and likely size. This is a rough estimate only. If not possible to estimate, use null.
 - "expiryDate": best-before or use-by date if visible, in "YYYY-MM-DD" format. If not visible, use null.
 
 Example response:
 {"name":"Tilda Basmati Rice","quantity":5,"unit":"kg","caloriesTotal":17500,"expiryDate":null}`;
+
+const NUTRITION_PROMPT = `Look at this photo of a food product's nutrition label or back-of-packet information. Extract the weight/quantity and calorie information.
+
+Respond with ONLY a JSON object (no markdown, no code fences, no explanation):
+
+- "quantity": the total net weight, volume, or count shown on the packet. Just the number.
+- "unit": the unit — must be one of: "kg", "g", "liters", "ml", "tins", "packets", "bags", "bottles", "boxes", "jars", "units"
+- "caloriesTotal": total calories for the FULL packet. Calculate from the nutritional panel (e.g., if it says 350 kcal per 100g and the packet is 500g, return 1750). If the panel shows "per serving", multiply by the number of servings if shown.
+
+Example response:
+{"quantity":500,"unit":"g","caloriesTotal":1750}`;
 
 const EXPIRY_PROMPT = `Look at this photo of a food product's expiry or best-before date. Extract the date and respond with ONLY a JSON object:
 
@@ -68,7 +79,12 @@ export async function POST(request: Request) {
     }
 
     const anthropic = new Anthropic();
-    const prompt = scanType === "expiry" ? EXPIRY_PROMPT : PRODUCT_PROMPT;
+    const prompts: Record<string, string> = {
+      product: PRODUCT_PROMPT,
+      nutrition: NUTRITION_PROMPT,
+      expiry: EXPIRY_PROMPT,
+    };
+    const prompt = prompts[scanType] || PRODUCT_PROMPT;
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-5-20250929",
@@ -92,10 +108,13 @@ export async function POST(request: Request) {
       return NextResponse.json(result);
     } catch {
       console.error("Failed to parse scan JSON:", textContent.text.substring(0, 200));
+      const errorMessages: Record<string, string> = {
+        expiry: "Could not read the expiry date. Try a clearer photo.",
+        nutrition: "Could not read the nutrition label. Try a clearer photo.",
+        product: "Could not recognise this item. Try photographing the front label.",
+      };
       return NextResponse.json({
-        error: scanType === "expiry"
-          ? "Could not read the expiry date. Try a clearer photo."
-          : "Could not recognise this item. Try photographing the front label.",
+        error: errorMessages[scanType] || errorMessages.product,
       }, { status: 422 });
     }
   } catch (error) {
